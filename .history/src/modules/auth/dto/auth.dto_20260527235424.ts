@@ -1,0 +1,13 @@
+// export class SignupDto {
+//   username!: string;
+//   email!: string;
+//   password!: string;
+//   confirmPassword!: string;
+// }
+
+// export class LoginDto {
+//   email!: string;
+//   password!: string;
+// }
+import {z}
+export type SignupDTO = z.in

@@ -1,0 +1,15 @@
+import { Controller } from "@nestjs/common";
+import { UserService } from "./user.service";
+
+@Controller('user')
+export class UserController {
+    constructor(private readonly userService : UserService){
+
+        @Get()
+        profile(){
+            const user = this.user 
+            return {message :"Done" , data :{user}} 
+        }
+
+    }
+}

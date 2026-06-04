@@ -1,0 +1,13 @@
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
+export class AuthenticationService {
+  constructor() {}
+  signup(data: SignupDTO) {
+    return data;
+  }
+
+  login(data: LoginDto) {
+    return data;
+  }
+}
