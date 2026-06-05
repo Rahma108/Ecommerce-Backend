@@ -1,5 +1,0 @@
-@Mod
-export class AuthModule{
-
-
-}

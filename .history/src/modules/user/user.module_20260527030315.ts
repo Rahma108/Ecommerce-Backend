@@ -1,3 +1,0 @@
-
-@Modul
-export class UserModule {}

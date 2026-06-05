@@ -4,6 +4,7 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { AuthenticationService } from './auth.service';
@@ -15,22 +16,25 @@ import { signupSchema } from './auth.validation';
 export class AuthenticationController {
   constructor(private readonly authenticationService: AuthenticationService) {}
   @Post('signup')
-  signup(
+  async signup(
     @Body(new CustomValidationPipe<SignupDTO>(signupSchema)) body: SignupDTO,
   ) {
-    const user = this.authenticationService.signup(body);
-    return { message: 'Done', user };
+    const user = await this.authenticationService.signup(body);
+    return { message: 'Done', data: { user } };
   }
   @HttpCode(HttpStatus.OK)
+  @UsePipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    }),
+  )
   @Post('login')
-  // new CustomValidationPipe<LoginDTO>(loginSchema)
   login(
     @Body(
       new ValidationPipe({
-        // whitelist: true,
-        // forbidNonWhitelisted: true,
-        // skipMissingProperties: false,
-        dismissDefaultMessages: true,
+        whitelist: true,
+        forbidNonWhitelisted: true,
       }),
     )
     body: LoginBodyDTO,

@@ -23,9 +23,6 @@ export class LoginBodyDTO {
 export class SignupBodyDTO extends LoginBodyDTO {
   @Length(2, 20, { message: 'Invalid range is 2 - 20' })
   username!: string;
-  // @Validate(MatchBetweenFields, {
-  //   message: 'Password Mismatch with confirmPassword',
-  // })
   @ValidateIf((object: SignupBodyDTO) => {
     return Boolean(object.password);
   })
