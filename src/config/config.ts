@@ -1,15 +1,12 @@
+
 export const PORT = process.env['PORT'] as string;
 export const DB_URI = process.env['DB_URI'] as string;
 export const REDIS_URI = process.env['REDIS_URI'] as string;
 
 export const SALT_ROUND = Number(process.env['SALT_ROUND']) || 10;
 export const IV_LENGTH = Number(process.env['IV_LENGTH']) || 16;
-
-if (!process.env['SECURITY_KEY']) {
-  throw new Error('SECURITY_KEY is not defined in environment variables');
-}
-
-export const SECURITY_KEY = process.env['SECURITY_KEY'];
+export const SECURITY_KEY = process.env.SECURITY_KEY!;
+// console.log('SECURITY_KEY:', process.env.SECURITY_KEY);
 export const System_TOKEN_SECURITY_KEY = process.env[
   'System_TOKEN_SECURITY_KEY'
 ] as string;

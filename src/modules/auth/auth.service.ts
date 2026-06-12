@@ -1,23 +1,159 @@
-import { ConflictException, Injectable } from '@nestjs/common';
-import { LoginDTO, SignupDTO } from './dto/auth.dto';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { IUser } from 'src/common/interfaces';
 import { UserRepository } from 'src/common/repository';
+import { CacheService } from 'src/common/utils/service/caching.service';
+import { EmailService } from 'src/common/utils/service';
+import { emailEmitter } from 'src/common/events';
+import { EmailEnum, ProviderEnum } from 'src/common/enums';
+import { createNumberOtp } from 'src/common/otp';
+import { compareHash, EncryptionSecurity, generateHash } from 'src/common/utils/service/security';
+import { ConfirmEmailDTO, ResendConfirmEmailDto, SignupDTO } from './dto/auth.dto';
 
 @Injectable()
 export class AuthenticationService {
-  constructor(private readonly userRepository: UserRepository) {}
-  async signup(data: SignupDTO): Promise<IUser> {
-    const exist = await this.userRepository.findOne({
-      filter: { email: data.email },
-    });
-    if (exist) {
-      throw new ConflictException('Email Already Exist ✖️');
-    }
-    const user = await this.userRepository.createOne({ data });
-    return user.toJSON();
-  }
+  constructor(
+    private emailService: EmailService,
+    private readonly userRepository: UserRepository,
+    private readonly redis: CacheService,
+    private readonly encryption: EncryptionSecurity
+  ) {}
+ 
 
-  login(data: LoginDTO) {
-    return data;
-  }
+  // login(data: LoginDTO) {
+  //   return data;
+  // }
+    private verifyEmailOtp = async({ title   , subject=EmailEnum.confirmEmail ,  email }
+        :{title:string , subject:EmailEnum , email:string } )=>{
+           //Check Block Conditional .
+        const blockKey=  this.redis.otpBlockKey({email , type:subject })
+        const remainingBlockTime = await this.redis.ttl(blockKey)
+        if(remainingBlockTime>0){
+            throw  new ConflictException(`You have reached Max Request Trial Count please try again later after ${remainingBlockTime} sec. `)
+        }
+
+        const oldCodeTTL = await this.redis.ttl(this.redis.otpKey({email , type:subject}))
+        if(oldCodeTTL > 0 ){
+            throw  new ConflictException(`Sorry we can not send new otp until first one get expired please try again after ${oldCodeTTL} `)
+
+        }
+        //check Max Request Trials 
+        const maxTrialKey = this.redis.otpMaxRequestKey({email , type:subject })
+            const checkOtpMaxRequest = Number(await this.redis.get(maxTrialKey) || 0 )
+            if(checkOtpMaxRequest>=3){
+                await this.redis.set({
+                key:  blockKey , 
+                value : 0
+                , ttl:300 })
+        
+            throw  new ConflictException("You have reached Max Request Trial Count please try again later after 300 sec. ")
+
+            }
+
+            const code = await createNumberOtp()
+            await this.redis.set({
+            key: this.redis.otpKey({email , type:subject }) , 
+            value : await generateHash({plaintext : code.toString()})
+            , ttl: 120
+        })
+            await this.emailService.sendEmail({
+                to:email ,
+                subject,
+                html:this.emailService.emailTemplate({code , title })
+            })
+        checkOtpMaxRequest  > 0 ? await this.redis.increment(maxTrialKey): await this.redis.set({key : maxTrialKey , value : 1 , ttl : 300 })
+        return ;
+}
+
+//Confirm Email with otp..
+    public  confirmEmail = async({otp , email} : ConfirmEmailDTO ) : Promise<void>=>{
+
+        const account = await this.userRepository.findOne({
+        filter:{email , confirmEmail: { $eq: null } , provider:ProviderEnum.SYSTEM }  ,
+        projection:"email"
+    })
+    if(!account){
+        throw  new NotFoundException("Fail to find Match account ❌")
+    }
+    const hashOtp = await this.redis.get(this.redis.otpKey({email}))
+    if(!hashOtp){
+        throw new NotFoundException("Expired OTP 😊")
+    }
+    if(!await compareHash({plaintext: otp  , cipherText: hashOtp} )){
+        throw  new ConflictException("Invalid OTP ❌")
+    }
+    account.confirmEmail = new Date()
+    await account.save()
+    await this.redis.deleteKeys(await this.redis.keys(this.redis.otpKey({email })))
+    return ;
+    }
+
+    public reSendConfirmEmail = async({email}: ResendConfirmEmailDto)=>{
+        const account = await this.userRepository.findOne({
+        filter:{email , confirmEmail: { $eq: null } , Provider:ProviderEnum.SYSTEM }  ,
+        projection:"email"
+    })
+    if(!account){
+        throw new  NotFoundException("Fail to find Match account ❌")
+    }
+        // Re-Send a verification code to email after registration
+    await this.verifyEmailOtp({title  : "Verify Account", subject: EmailEnum.confirmEmail , email:email })
+    return ;
+
+
+}
+    // public  async login(inputs:LoginDTO , issuer: string): Promise<{ access_token: string; refresh_token: string }>{
+    //     const  { email , password  } = inputs
+    //     const user = await this.userRepository.findOne({
+    //         filter:{email, confirmEmail:{$ne : null} , provider:ProviderEnum.SYSTEM  },
+    //         options:{lean:false}
+    //     })
+    //     if(!user){
+    //         throw new NotFoundException("Invalid Login Credentials ❌")
+    //     }
+    //     if(!await compareHash({plaintext:password , cipherText: user.password })){
+    //         throw new NotFoundException("Invalid Login Credentials ❌")
+    //     }
+
+    //     // store fcm in redis .
+    //     return this.tokenService.createLoginCredentials(user , issuer)
+    // }
+    public async signup(data: SignupDTO): Promise<IUser> {
+        let { username, email, password , phone } = data
+        
+        const checkUserExist = await this.userRepository.findOne({
+            filter: { email },
+            projection: "email",
+            options: { lean: true }
+        })
+        
+        if (checkUserExist) {
+            throw new ConflictException("Email Exists ‼️‼️")
+        }
+        
+        const user = await this.userRepository.create({
+            data: { 
+                username, 
+                email, 
+                password, 
+                confirmEmail: null ,
+                phone 
+            }
+        })
+        
+        if (!user) {
+            throw new BadRequestException("Fail To Create User ✖️")
+        }
+        
+        emailEmitter.emit("sendEmail", async () => {
+            await this.verifyEmailOtp({
+                title: "Verify Account",
+                subject: EmailEnum.confirmEmail,
+                email: email
+            })
+        })
+        
+        return user.toJSON()
+    }
+
+
 }

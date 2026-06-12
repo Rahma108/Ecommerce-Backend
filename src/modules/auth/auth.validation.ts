@@ -50,6 +50,7 @@ export const signupSchema = loginSchema
   .safeExtend({
     username: generalValidationFields.username,
     confirmPassword: generalValidationFields.confirmPassword,
+    phone : generalValidationFields.phone
   })
   .superRefine((data, ctx) => {
     if (data.password !== data.confirmPassword) {

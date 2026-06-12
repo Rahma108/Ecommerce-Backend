@@ -3,15 +3,15 @@ import {
   Controller,
   HttpCode,
   HttpStatus,
+  Patch,
   Post,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { AuthenticationService } from './auth.service';
-import type { LoginBodyDTO, SignupDTO } from './dto/auth.dto';
+import type {  ConfirmEmailDTO, LoginDTO, ResendConfirmEmailDto, SignupDTO } from './dto/auth.dto';
 import { CustomValidationPipe } from 'src/common/pipe/validation.pipe';
 import { signupSchema } from './auth.validation';
-
 @Controller('auth')
 export class AuthenticationController {
   constructor(private readonly authenticationService: AuthenticationService) {}
@@ -37,9 +37,20 @@ export class AuthenticationController {
         forbidNonWhitelisted: true,
       }),
     )
-    body: LoginBodyDTO,
+    body: LoginDTO,
   ) {
     console.log({ body });
     return { message: 'Done', body };
+  }
+  @Patch('confirm-email')
+  async confirmEmail(@Body() body:ConfirmEmailDTO){
+      await this.authenticationService.confirmEmail(body)
+      return ;
+  }
+
+  @Patch('/resend-confirm-email')
+  async reSendConfirmEmail(@Body() body:ResendConfirmEmailDto){
+      await this.authenticationService.reSendConfirmEmail(body)
+      return ;
   }
 }

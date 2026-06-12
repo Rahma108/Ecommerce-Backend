@@ -1,14 +1,16 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+
 import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import { ProductModule } from './modules/product/product.module';
 import { CategoryModule } from './modules/category/category.module';
 import { BrandModule } from './modules/brand/brand.module';
 import { OrderModule } from './modules/order/order.module';
-import { ConfigModule } from '@nestjs/config';
-import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
   imports: [
@@ -16,7 +18,14 @@ import { MongooseModule } from '@nestjs/mongoose';
       envFilePath: ['.env.development', '.env.production'],
       isGlobal: true,
     }),
-    MongooseModule.forRoot(process.env.DB_URI as string),
+
+    MongooseModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        uri: config.get<string>('DB_URI'),
+      }),
+    }),
+
     AuthModule,
     UserModule,
     ProductModule,
