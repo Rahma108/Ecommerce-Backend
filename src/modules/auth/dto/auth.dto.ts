@@ -3,6 +3,7 @@ import {
   Allow,
   IsEmail,
   IsNotEmpty,
+  IsString,
   IsStrongPassword,
   Length,
   Matches,
@@ -20,13 +21,16 @@ export class ConfirmEmailDTO extends ResendConfirmEmailDto{
   otp! : string;
 
 }
-export class LoginDTO extends ResendConfirmEmailDto{
+export class LoginDTO {
+  @IsEmail()
+  email!: string;
 
-  @IsStrongPassword({minNumbers:3 , minUppercase:1 , minLowercase:1 , minSymbols: 1})
-  @IsNotEmpty()
+  @IsStrongPassword()
   password!: string;
-  FCM?:string;
+
+  FCM?: string;
 }
+
 export class SignupDTO extends LoginDTO {
   @Length(2, 20, { message: 'Invalid range is 2 - 20' })
   username!: string;
@@ -37,4 +41,12 @@ export class SignupDTO extends LoginDTO {
   confirmPassword!: string;
   @Allow()
   phone!:string;
+}
+
+
+export class SignupWithGoogleDTO  {
+  @IsString()
+  @IsNotEmpty()
+  idToken !:string;
+
 }

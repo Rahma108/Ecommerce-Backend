@@ -1,27 +1,27 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { IUser } from 'src/common/interfaces';
 import { UserRepository } from 'src/common/repository';
 import { CacheService } from 'src/common/utils/service/caching.service';
-import { EmailService } from 'src/common/utils/service';
+import { EmailService, TokenService } from 'src/common/utils/service';
 import { emailEmitter } from 'src/common/events';
 import { EmailEnum, ProviderEnum } from 'src/common/enums';
 import { createNumberOtp } from 'src/common/otp';
-import { compareHash, EncryptionSecurity, generateHash } from 'src/common/utils/service/security';
-import { ConfirmEmailDTO, ResendConfirmEmailDto, SignupDTO } from './dto/auth.dto';
+import { EncryptionSecurity, SecurityService } from 'src/common/utils/service/security';
+import { ConfirmEmailDTO, LoginDTO, ResendConfirmEmailDto, SignupDTO } from './dto/auth.dto';
+import { ConfigService } from '@nestjs/config';
+import { OAuth2Client, TokenPayload } from 'google-auth-library';
 
 @Injectable()
 export class AuthenticationService {
   constructor(
-    private emailService: EmailService,
+    private readonly configService : ConfigService  ,
+    private readonly tokenService : TokenService,
+    private  readonly securityService: SecurityService,
+    private  readonly emailService: EmailService,
     private readonly userRepository: UserRepository,
     private readonly redis: CacheService,
     private readonly encryption: EncryptionSecurity
   ) {}
- 
-
-  // login(data: LoginDTO) {
-  //   return data;
-  // }
     private verifyEmailOtp = async({ title   , subject=EmailEnum.confirmEmail ,  email }
         :{title:string , subject:EmailEnum , email:string } )=>{
            //Check Block Conditional .
@@ -52,7 +52,7 @@ export class AuthenticationService {
             const code = await createNumberOtp()
             await this.redis.set({
             key: this.redis.otpKey({email , type:subject }) , 
-            value : await generateHash({plaintext : code.toString()})
+            value : await this.securityService.generateHash({plaintext : code.toString()})
             , ttl: 120
         })
             await this.emailService.sendEmail({
@@ -78,7 +78,7 @@ export class AuthenticationService {
     if(!hashOtp){
         throw new NotFoundException("Expired OTP 😊")
     }
-    if(!await compareHash({plaintext: otp  , cipherText: hashOtp} )){
+    if(!await this.securityService.compareHash({plaintext: otp  , cipherText: hashOtp} )){
         throw  new ConflictException("Invalid OTP ❌")
     }
     account.confirmEmail = new Date()
@@ -101,22 +101,34 @@ export class AuthenticationService {
 
 
 }
-    // public  async login(inputs:LoginDTO , issuer: string): Promise<{ access_token: string; refresh_token: string }>{
-    //     const  { email , password  } = inputs
-    //     const user = await this.userRepository.findOne({
-    //         filter:{email, confirmEmail:{$ne : null} , provider:ProviderEnum.SYSTEM  },
-    //         options:{lean:false}
-    //     })
-    //     if(!user){
-    //         throw new NotFoundException("Invalid Login Credentials ❌")
-    //     }
-    //     if(!await compareHash({plaintext:password , cipherText: user.password })){
-    //         throw new NotFoundException("Invalid Login Credentials ❌")
-    //     }
+   public async login(inputs: LoginDTO, issuer: string) {
+  const { email, password } = inputs;
 
-    //     // store fcm in redis .
-    //     return this.tokenService.createLoginCredentials(user , issuer)
-    // }
+  const user = await this.userRepository.findOne({
+    filter: {
+      email,
+      confirmEmail: { $ne: null },
+      provider: ProviderEnum.SYSTEM,
+    },
+    options: { lean: false },
+    projection: '+password',
+  });
+
+  if (!user) {
+    throw new UnauthorizedException("Invalid Login Credentials ❌");
+  }
+
+  const isMatch = await this.securityService.compareHash({
+    plaintext: password,
+    cipherText: user.password,
+  });
+
+  if (!isMatch) {
+    throw new UnauthorizedException("Invalid Login Credentials ❌");
+  }
+
+  return this.tokenService.createLoginCredentials(user, issuer);
+}
     public async signup(data: SignupDTO): Promise<IUser> {
         let { username, email, password , phone } = data
         
@@ -128,17 +140,21 @@ export class AuthenticationService {
         
         if (checkUserExist) {
             throw new ConflictException("Email Exists ‼️‼️")
-        }
-        
+        }    
+       const hashedPassword = await this.securityService.generateHash({
+  plaintext: password,
+});
+
+        const encryptedPhone = this.encryption.encrypt(phone);
+
         const user = await this.userRepository.create({
-            data: { 
-                username, 
-                email, 
-                password, 
-                confirmEmail: null ,
-                phone 
-            }
-        })
+        data: {
+            username,
+            email,
+            password: hashedPassword,
+            phone: encryptedPhone,
+        },
+        });
         
         if (!user) {
             throw new BadRequestException("Fail To Create User ✖️")
@@ -154,6 +170,79 @@ export class AuthenticationService {
         
         return user.toJSON()
     }
+
+    
+    // With Google 
+    
+    private async  verifyGoogleAccount(idToken : string ) : Promise<TokenPayload>{
+            const client = new OAuth2Client();
+            const ticket = await client.verifyIdToken({
+                idToken,
+                audience: this.configService.get('CLIENT_ID') , 
+            });
+            const payload = ticket.getPayload();
+            console.log(payload);
+            if(!payload?.email_verified){
+            throw new  BadRequestException("Fail to verify authenticated this account with google 🫠")
+
+            }
+            return payload
+
+
+}
+
+    async loginWithGmail (idToken: string , issuer : string){
+    if (!idToken) {
+        throw new BadRequestException( "idToken is required" );
+    }
+    const payload = await this.verifyGoogleAccount(idToken)
+    const user = await this.userRepository.findOne( {filter:{ email:payload.email as string , provider:ProviderEnum.GOOGLE } } )
+    if(!user){
+        throw  new NotFoundException( "Invalid Login Credentials .")
+
+    }
+
+    return await this.tokenService.createLoginCredentials(user, issuer) 
+}
+
+    async signupWithGmail(idToken: string , issuer : string){
+        if (!idToken) {
+            throw new BadRequestException("idToken is required" );
+        }
+        const payload = await this.verifyGoogleAccount(idToken)
+        const checkUserExist = await this.userRepository.findOne( {filter:{ email:payload.email as string }} )
+        if(checkUserExist){
+            // 1- User Exists in Database  And Provider == System  ==> Throw Error ..
+            if(checkUserExist.provider == ProviderEnum.SYSTEM){
+            throw new ConflictException("Account Already Exist With Different Provider ‼️")
+
+        }
+            const token = await this.tokenService.createLoginCredentials(checkUserExist, issuer);
+            return { account: token, status: 200 };
+
+        }
+
+        //  3- User Not Exists ==> Create with Provider Google .
+        // New user → create + login
+        const newUser = await this.userRepository.create({
+            data: {
+            firstName: payload.given_name || '',
+            lastName: payload.family_name || '',
+            email: payload.email,
+            provider: ProviderEnum.GOOGLE,
+            profileImage: payload.picture,
+            confirmEmail: new Date(),
+            phone:""
+            }
+        });
+
+        const token = await this.tokenService.createLoginCredentials(newUser, issuer);
+        return { account: token , status: 201 };
+
+
+}
+
+
 
 
 }

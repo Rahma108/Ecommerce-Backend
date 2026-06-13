@@ -34,7 +34,9 @@ export class User implements IUser {
   lastName!: string;
   @Prop({ type: String, required: true, unique: true })
   email!: string;
-  @Prop({ type: String, required: true })
+  @Prop({ type: String, required: function(this:HUserDocument){
+    return this.provider == ProviderEnum.SYSTEM
+  }})
   password!: string;
   @Prop({ type: String, required: false })
   phone?: string;

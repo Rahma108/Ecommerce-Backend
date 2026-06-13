@@ -12,8 +12,14 @@ export class EncryptionSecurity {
     const secret = this.configService.getOrThrow<string>('SECURITY_KEY');
 
     this.key = crypto.createHash('sha256').update(secret).digest();
+    this.ivLength = parseInt(
+      this.configService.get<string>('IV_LENGTH') ?? '16',
+      10,
+    );
 
-    this.ivLength = Number(this.configService.get('IV_LENGTH') ?? 16);
+    if (isNaN(this.ivLength) || this.ivLength <= 0) {
+      this.ivLength = 16;
+    }
   }
   encrypt(text: string): string {
     const iv = crypto.randomBytes(this.ivLength);

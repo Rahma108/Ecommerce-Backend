@@ -5,42 +5,33 @@ import {
   HttpStatus,
   Patch,
   Post,
+  Req,
+  Res,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { AuthenticationService } from './auth.service';
-import type {  ConfirmEmailDTO, LoginDTO, ResendConfirmEmailDto, SignupDTO } from './dto/auth.dto';
-import { CustomValidationPipe } from 'src/common/pipe/validation.pipe';
-import { signupSchema } from './auth.validation';
+import type {  ConfirmEmailDTO, LoginDTO, ResendConfirmEmailDto, SignupDTO, SignupWithGoogleDTO } from './dto/auth.dto';
+import type { Request, Response } from 'express';
 @Controller('auth')
 export class AuthenticationController {
   constructor(private readonly authenticationService: AuthenticationService) {}
   @Post('signup')
   async signup(
-    @Body(new CustomValidationPipe<SignupDTO>(signupSchema)) body: SignupDTO,
+    @Body() body: SignupDTO,
   ) {
     const user = await this.authenticationService.signup(body);
     return { message: 'Done', data: { user } };
   }
   @HttpCode(HttpStatus.OK)
-  @UsePipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-    }),
-  )
   @Post('login')
-  login(
-    @Body(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-      }),
-    )
+  async login(
+    @Req() req : Request,
+    @Body()
     body: LoginDTO,
   ) {
-    console.log({ body });
-    return { message: 'Done', body };
+    const credentials = await this.authenticationService.login(body , `${req.protocol}://${req.get('host')}`)
+    return { message: 'Done', data: credentials };
   }
   @Patch('confirm-email')
   async confirmEmail(@Body() body:ConfirmEmailDTO){
@@ -52,5 +43,17 @@ export class AuthenticationController {
   async reSendConfirmEmail(@Body() body:ResendConfirmEmailDto){
       await this.authenticationService.reSendConfirmEmail(body)
       return ;
+  }
+
+  // Google 
+  @Post('signupWithGoogle')
+  async signupWithGoogle(
+    @Body() body: SignupWithGoogleDTO,
+    @Req() req:Request,
+    @Res({passthrough:true}) res : Response
+  ) {
+    const {account , status} = await this.authenticationService.signupWithGmail(body.idToken ,`${req.protocol}://${req.get('host')}`);
+    res.status(status)
+    return { message: 'Done', data: account };
   }
 }

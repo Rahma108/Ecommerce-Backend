@@ -6,7 +6,8 @@ import { UserRepository } from 'src/common/repository';
 import { createClient } from 'redis';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CacheService } from 'src/common/utils/service/caching.service';
-import { EmailService, EncryptionSecurity } from 'src/common/utils/service';
+import { EmailService, EncryptionSecurity, SecurityService, TokenService } from 'src/common/utils/service';
+import { JwtService } from '@nestjs/jwt';
 @Module({
   imports: [UserModule , ConfigModule],
   exports: ['REDIS_CLIENT'],
@@ -31,7 +32,11 @@ import { EmailService, EncryptionSecurity } from 'src/common/utils/service';
     UserRepository,
     CacheService,
     EmailService,
-    EncryptionSecurity
+    EncryptionSecurity,
+    SecurityService,
+    JwtService,
+    TokenService
+
   ],
 })
 export class AuthModule {}
