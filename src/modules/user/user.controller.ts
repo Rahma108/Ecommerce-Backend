@@ -1,8 +1,7 @@
-import { Controller, Get, Req,UseGuards } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { UserService } from './user.service';
-import { AuthenticationGuard, AuthorizationGuard } from 'src/common/guard';
-import type { IAuthReq } from 'src/common/interfaces';
-import { Auth, Role } from 'src/common/decorator';
+import type {  IUser } from 'src/common/interfaces';
+import { Auth } from 'src/common/decorator';
 import { RoleEnum } from 'src/common/enums';
 import type { HUserDocument } from 'src/DB/models';
 import { User } from 'src/common/decorator/user.decorator';
@@ -15,8 +14,8 @@ export class UserController {
 
   profile(
     @User() user:HUserDocument
-  ) {
+  ):IUser {
     // const user = this.userService.profile();
-    return { message: 'Done', data: { user } };
+    return user;
   }
 }

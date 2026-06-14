@@ -6,7 +6,7 @@ import {
   Virtual,
 } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-import { GenderEnum, ProviderEnum, RoleEnum } from 'src/common/enums';
+import { GenderEnum, LangEnum, ProviderEnum, RoleEnum } from 'src/common/enums';
 import { IUser } from 'src/common/interfaces';
 
 export type HUserDocument = HydratedDocument<IUser>;
@@ -28,6 +28,9 @@ export class User implements IUser {
     },
   })
   username!: string;
+
+  @Prop({ type: String, enum : LangEnum , default: LangEnum.En })
+  lang!: LangEnum ;
   @Prop({ type: String, required: true })
   firstName!: string;
   @Prop({ type: String, required: true })

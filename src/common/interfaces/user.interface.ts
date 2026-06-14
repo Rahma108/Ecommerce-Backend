@@ -1,6 +1,7 @@
 import { Types } from 'mongoose';
-import { GenderEnum, RoleEnum } from '../enums';
+import { GenderEnum, LangEnum, RoleEnum } from '../enums';
 export interface IUser {
+  lang: LangEnum ;
   username: string;
   firstName: string;
   lastName: string;

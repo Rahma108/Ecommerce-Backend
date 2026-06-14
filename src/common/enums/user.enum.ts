@@ -10,3 +10,7 @@ export enum ProviderEnum {
   SYSTEM = 0,
   GOOGLE = 1,
 }
+export enum LangEnum {
+  AR = "ar",
+  En = "en",
+}

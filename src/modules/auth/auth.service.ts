@@ -10,6 +10,7 @@ import { EncryptionSecurity, SecurityService } from 'src/common/utils/service/se
 import { ConfirmEmailDTO, LoginDTO, ResendConfirmEmailDto, SignupDTO } from './dto/auth.dto';
 import { ConfigService } from '@nestjs/config';
 import { OAuth2Client, TokenPayload } from 'google-auth-library';
+import { LoginResponse } from './entites/auth.entites';
 
 @Injectable()
 export class AuthenticationService {
@@ -23,7 +24,7 @@ export class AuthenticationService {
     private readonly encryption: EncryptionSecurity
   ) {}
     private verifyEmailOtp = async({ title   , subject=EmailEnum.confirmEmail ,  email }
-        :{title:string , subject:EmailEnum , email:string } )=>{
+        :{title:string , subject:EmailEnum , email:string } ):Promise<void>=>{
            //Check Block Conditional .
         const blockKey=  this.redis.otpBlockKey({email , type:subject })
         const remainingBlockTime = await this.redis.ttl(blockKey)
@@ -87,7 +88,7 @@ export class AuthenticationService {
     return ;
     }
 
-    public reSendConfirmEmail = async({email}: ResendConfirmEmailDto)=>{
+    public reSendConfirmEmail = async({email}: ResendConfirmEmailDto):Promise<void>=>{
         const account = await this.userRepository.findOne({
         filter:{email , confirmEmail: { $eq: null } , Provider:ProviderEnum.SYSTEM }  ,
         projection:"email"
@@ -101,7 +102,7 @@ export class AuthenticationService {
 
 
 }
-   public async login(inputs: LoginDTO, issuer: string) {
+   public async login(inputs: LoginDTO, issuer: string) :Promise<LoginResponse>{
   const { email, password } = inputs;
 
   const user = await this.userRepository.findOne({
@@ -191,7 +192,7 @@ export class AuthenticationService {
 
 }
 
-    async loginWithGmail (idToken: string , issuer : string){
+    async loginWithGmail (idToken: string , issuer : string):Promise<LoginResponse>{
     if (!idToken) {
         throw new BadRequestException( "idToken is required" );
     }
@@ -205,7 +206,7 @@ export class AuthenticationService {
     return await this.tokenService.createLoginCredentials(user, issuer) 
 }
 
-    async signupWithGmail(idToken: string , issuer : string){
+    async signupWithGmail(idToken: string , issuer : string):Promise<{ status : number , account: LoginResponse } >{
         if (!idToken) {
             throw new BadRequestException("idToken is required" );
         }
