@@ -1,17 +1,24 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
-import { MongooseModule } from '@nestjs/mongoose';
-import { User, userMongooseSchema } from 'src/DB/models';
+import {  PreAuthMiddleware } from 'src/common/middleware/authentication.middleware';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: User.name, schema: userMongooseSchema },
-    ]),
+    // MongooseModule.forFeature([
+    //   { name: User.name, schema: userMongooseSchema }
+    // ])
   ],
-  exports: [MongooseModule],
+  exports: [],
   controllers: [UserController],
   providers: [UserService],
 })
-export class UserModule {}
+export class UserModule {
+    configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(PreAuthMiddleware)
+      .forRoutes(UserController);
+  }
+
+}
+

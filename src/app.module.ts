@@ -11,6 +11,7 @@ import { ProductModule } from './modules/product/product.module';
 import { CategoryModule } from './modules/category/category.module';
 import { BrandModule } from './modules/brand/brand.module';
 import { OrderModule } from './modules/order/order.module';
+import { SharedAuthenticationModule } from './common/modules';
 
 @Module({
   imports: [
@@ -25,7 +26,7 @@ import { OrderModule } from './modules/order/order.module';
         uri: config.get<string>('DB_URI'),
       }),
     }),
-
+    SharedAuthenticationModule,
     AuthModule,
     UserModule,
     ProductModule,

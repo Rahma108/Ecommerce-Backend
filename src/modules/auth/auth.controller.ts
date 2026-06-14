@@ -7,12 +7,12 @@ import {
   Post,
   Req,
   Res,
-  UsePipes,
-  ValidationPipe,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthenticationService } from './auth.service';
 import type {  ConfirmEmailDTO, LoginDTO, ResendConfirmEmailDto, SignupDTO, SignupWithGoogleDTO } from './dto/auth.dto';
 import type { Request, Response } from 'express';
+import { WatchInterceptor } from 'src/common/interceptor';
 @Controller('auth')
 export class AuthenticationController {
   constructor(private readonly authenticationService: AuthenticationService) {}
@@ -23,6 +23,7 @@ export class AuthenticationController {
     const user = await this.authenticationService.signup(body);
     return { message: 'Done', data: { user } };
   }
+  @UseInterceptors(WatchInterceptor)
   @HttpCode(HttpStatus.OK)
   @Post('login')
   async login(
@@ -30,6 +31,7 @@ export class AuthenticationController {
     @Body()
     body: LoginDTO,
   ) {
+    console.log({lang : req.headers['accept-language']})
     const credentials = await this.authenticationService.login(body , `${req.protocol}://${req.get('host')}`)
     return { message: 'Done', data: credentials };
   }
