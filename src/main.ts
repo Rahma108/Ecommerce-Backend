@@ -3,14 +3,15 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { defaultLanguage } from './common/middleware';
 import { TransformInterceptor, WatchInterceptor } from './common/interceptor';
 import { LanguageInterceptor } from './common/interceptor/language.interceptor';
-
+import *  as express from "express"
+import { resolve } from 'node:path';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService); 
-  app.enableCors()
+  app.enableCors();
+  app.use("/upload" , express.static(resolve(`./uploads`)))
   // app.use(defaultLanguage)
   app.useGlobalInterceptors(new WatchInterceptor() , new LanguageInterceptor() , new TransformInterceptor() )
   app.useGlobalPipes(

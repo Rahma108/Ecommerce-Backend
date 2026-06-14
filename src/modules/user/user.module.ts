@@ -1,13 +1,14 @@
-import { MiddlewareConsumer, Module } from '@nestjs/common';
+import { BadRequestException, MiddlewareConsumer, Module } from '@nestjs/common';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import {  PreAuthMiddleware } from 'src/common/middleware/authentication.middleware';
-
+import { MulterModule } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import type{ Request } from 'express';
+import { randomUUID } from 'node:crypto';
 @Module({
   imports: [
-    // MongooseModule.forFeature([
-    //   { name: User.name, schema: userMongooseSchema }
-    // ])
+    // MulterModule.register()
   ],
   exports: [],
   controllers: [UserController],
