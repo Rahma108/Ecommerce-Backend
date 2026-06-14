@@ -12,6 +12,7 @@ import { CategoryModule } from './modules/category/category.module';
 import { BrandModule } from './modules/brand/brand.module';
 import { OrderModule } from './modules/order/order.module';
 import { SharedAuthenticationModule } from './common/modules';
+import { S3Service } from './common/utils';
 
 @Module({
   imports: [
@@ -35,6 +36,6 @@ import { SharedAuthenticationModule } from './common/modules';
     OrderModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService , S3Service ],
 })
 export class AppModule {}

@@ -1,12 +1,12 @@
-import { Controller, Get, MaxFileSizeValidator, ParseFilePipe, Patch, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, MaxFileSizeValidator, ParseFilePipe, Patch, UploadedFile, UploadedFiles, UseInterceptors } from '@nestjs/common';
 import { UserService } from './user.service';
-import type {  IUser } from 'src/common/interfaces';
+import type {  IFile, IUser } from 'src/common/interfaces';
 import { Auth } from 'src/common/decorator';
 import { RoleEnum } from 'src/common/enums';
 import type { HUserDocument } from 'src/DB/models';
 import { User } from 'src/common/decorator/user.decorator';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { fileFieldValidation, LocalMulter } from 'src/common/utils';
+import { FileFieldsInterceptor, FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { CloudMulter, fileFieldValidation, LocalMulter } from 'src/common/utils';
 
 @Controller('user')
 export class UserController {
@@ -21,15 +21,32 @@ export class UserController {
     return user;
   }
 
-  @UseInterceptors(FileInterceptor("attachment" ,LocalMulter({ validation : fileFieldValidation.image , folder :"User" , }) ) )
+  @UseInterceptors(FileInterceptor("attachment" , CloudMulter({ validation : fileFieldValidation.image  })) )
   @Auth([RoleEnum.USER ])
   @Patch("profile-image")
-  profileImage(
-    @UploadedFile(new ParseFilePipe({fileIsRequired: true, validators: [new MaxFileSizeValidator({maxSize: 2 * 1024 * 1024 })] })) file :Express.Multer.File ,
+  async profileImage(
+    @UploadedFile(new ParseFilePipe({fileIsRequired: true, validators: [new MaxFileSizeValidator({maxSize: 2 * 1024 * 1024 })] })) file :IFile,
+    @User() user:HUserDocument):Promise<IUser>{
+    return await this.userService.profileImage(file , user )
+    }
+
+  @UseInterceptors(FilesInterceptor("attachments" , 3 , LocalMulter({ validation : fileFieldValidation.image , folder :"User"}) ) )
+  @Auth([RoleEnum.USER ])
+  @Patch("profile-cover-image")
+  profileCoverImage(
+    @UploadedFiles(new ParseFilePipe({fileIsRequired: true, validators: [new MaxFileSizeValidator({maxSize: 2 * 1024 * 1024 })] })) files :Array<IFile> ,
     @User() user:HUserDocument):any {
-    return file;
+    return files;
   }
 
 
-  
+  @UseInterceptors(FileFieldsInterceptor([{name : "profile" , maxCount: 1 } , {name : "cover" , maxCount: 3 }], LocalMulter({ validation : fileFieldValidation.image , folder :"User"}) ) )
+  @Auth([RoleEnum.USER ])
+  @Patch("uploads")
+  uploads(
+    @UploadedFiles(new ParseFilePipe({fileIsRequired: true })) files :{profile : Array<IFile> , cover : Array<IFile>},
+    @User() user:HUserDocument):any {
+    return files;
+  }
+
 }
