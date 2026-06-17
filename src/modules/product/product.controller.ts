@@ -27,24 +27,60 @@ export class ProductController {
          return await this.productService.create(createProductDto , user , files);
        }
   
+      @Get()
+      async findAll(): Promise<IProduct[]> {
+        return this.productService.findAll();
+      }
 
-  @Get()
-  findAll() {
-    return this.productService.findAll();
-  }
+      
+      @Get(':productId')
+      async findOne(
+        @Param('productId') productId: string
+      ): Promise<IProduct> {
+        return this.productService.findOne(productId);
+      }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.productService.findOne(+id);
-  }
+      @UseInterceptors(
+        FileFieldsInterceptor(
+          [
+            { name: 'image', maxCount: 1 },
+            { name: 'gallery', maxCount: 5 },
+          ],
+          CloudMulter({ validation: fileFieldValidation.image })
+        )
+      )
+      @Auth([RoleEnum.ADMIN])
+      @Patch(':productId')
+      async update(
+        @Param('productId') productId: string,
+        @Body() updateProductDto: UpdateProductDto,
+        @User() user: HUserDocument,
+        @UploadedFiles()
+        files: { image?: IFile[]; gallery?: IFile[] }
+      ): Promise<IProduct> {
+        return this.productService.update(
+          productId,
+          updateProductDto,
+          user,
+          files
+        );
+      }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
-    return this.productService.update(+id, updateProductDto);
-  }
+   
+      @Auth([RoleEnum.ADMIN])
+      @Delete(':productId')
+      async remove(
+        @Param('productId') productId: string
+      ): Promise<{ message: string }> {
+        return this.productService.remove(productId);
+      }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.productService.remove(+id);
-  }
+      @Auth([RoleEnum.ADMIN])
+      @Patch(':productId/restore')
+      async restore(
+        @Param('productId') productId: string
+      ): Promise<IProduct> {
+        return this.productService.restore(productId);
+      }
 }
+

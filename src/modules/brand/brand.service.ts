@@ -52,22 +52,62 @@ export class BrandService {
 
     return brand.toJSON()
   }
+      async findAll(): Promise<IBrand[]> {
+        const brands = await this.brandRepository.find({
+            filter: {deletedAt: { $exists: false }},
+          projection: "name slug image createdBy",
+        });
 
-  findAll() {
-    return `This action returns all brand`;
-  }
+        return brands.map((brand) => brand.toJSON());
+      }
 
-  findOne(id: number) {
-    return `This action returns a #${id} brand`;
-  }
+    async findOne(id: string): Promise<IBrand> {
+      const _id = generateToObjectId(id);
 
+      const brand = await this.brandRepository.findOne({
+        filter: { _id , deletedAt: { $exists: false } },
+       
+      });
 
+      if (!brand) throw new NotFoundException("Brand Not Found ❕");
 
-  remove(id: number) {
-    return `This action removes a #${id} brand`;
-  }
+      return brand.toJSON();
+    }
+      async remove(brandId: string): Promise<{ message: string }> {
+      const _id = generateToObjectId(brandId);
+
+      const brand = await this.brandRepository.findOne({
+        filter: { _id },
+      });
+
+      if (!brand) throw new NotFoundException("Brand Not Found ❕");
+
+      // soft delete
+      brand.deletedAt = new Date();
+      await brand.save();
+
+      return { message: "Brand deleted successfully ✅" };
+    }
+    async restore(brandId: string): Promise<IBrand> {
+        const _id = generateToObjectId(brandId);
+
+        const brand = await this.brandRepository.findOne({
+          filter: { _id, paranoid: false },
+        });
+
+        if (!brand) throw new NotFoundException("Brand Not Found ❕");
+
+        if (!brand.deletedAt) {
+          throw new BadRequestException("Brand is already active ❕");
+        }
+
+        brand.deletedAt = undefined;
+        await brand.save();
+
+        return brand.toJSON();
 }
-function toObjectId(arg0: string): string | import("mongoose").Types.ObjectId {
-  throw new Error('Function not implemented.');
+
+
 }
+
 

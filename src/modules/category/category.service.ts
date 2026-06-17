@@ -129,16 +129,61 @@ export class CategoryService {
      return category.toJSON()
    }
  
-  findAll() {
-    return `This action returns all category`;
-  }
+  async findAll(): Promise<ICategory[]> {
+  const categories = await this.categoryRepository.find({
+    filter: {
+      deletedAt: { $exists: false },
+    },
+  });
 
-  findOne(id: number) {
-    return `This action returns a #${id} category`;
-  }
+  return categories.map((cat) => cat.toJSON());
+}
 
+ async findOne(id: string): Promise<ICategory> {
+  const _id = generateToObjectId(id);
 
-  remove(id: number) {
-    return `This action removes a #${id} category`;
-  }
+  const category = await this.categoryRepository.findOne({
+    filter: {
+      _id,
+      deletedAt: { $exists: false },
+    },
+  });
+
+  if (!category) throw new NotFoundException("Category Not Found ❕");
+
+  return category.toJSON();
+}
+    async remove(categoryId: string): Promise<{ message: string }> {
+      const _id = generateToObjectId(categoryId);
+
+      const category = await this.categoryRepository.findOne({
+        filter: { _id },
+      });
+
+      if (!category) throw new NotFoundException("Category Not Found ❕");
+
+      category.deletedAt = new Date();
+      await category.save();
+
+      return { message: "Category deleted successfully ✅" };
+    }
+
+    async restore(categoryId: string): Promise<ICategory> {
+          const _id = generateToObjectId(categoryId);
+
+          const category = await this.categoryRepository.findOne({
+            filter: { _id, paranoid: false },
+          });
+
+          if (!category) throw new NotFoundException("Category Not Found ❕");
+
+          if (!category.deletedAt) {
+            throw new BadRequestException("Category already active ❕");
+          }
+
+          category.deletedAt = undefined;
+          await category.save();
+
+          return category.toJSON();
+        }
 }

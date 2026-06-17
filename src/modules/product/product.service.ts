@@ -80,19 +80,122 @@ export class ProductService {
   }
    
 
-  findAll() {
-    return `This action returns all product`;
-  }
+  async findAll(): Promise<IProduct[]> {
+  const products = await this.productRepository.find({
+    filter: {
+      deletedAt: { $exists: false },
+    },
+  });
 
-  findOne(id: number) {
-    return `This action returns a #${id} product`;
-  }
+  return products.map((p) => p.toJSON());
+}
 
-  update(id: number, updateProductDto: UpdateProductDto) {
-    return `This action updates a #${id} product`;
-  }
+ async findOne(id: string): Promise<IProduct> {
+  const _id = generateToObjectId(id);
 
-  remove(id: number) {
-    return `This action removes a #${id} product`;
-  }
+  const product = await this.productRepository.findOne({
+    filter: {
+      _id,
+      deletedAt: { $exists: false },
+    },
+  });
+
+  if (!product) throw new NotFoundException("Product Not Found ❕");
+
+  return product.toJSON();
+}
+
+      async update(
+      productId: string,
+      updateProductDto: UpdateProductDto,
+      user: HUserDocument,
+      files?: { image?: IFile[]; gallery?: IFile[] }
+    ): Promise<IProduct> {
+      const _id = generateToObjectId(productId);
+
+      const product = await this.productRepository.findOne({
+        filter: { _id },
+      });
+
+      if (!product) throw new NotFoundException("Product Not Found ❕");
+
+      // update prices
+      if (updateProductDto.salePrice || updateProductDto.discountPercentage) {
+        const salePrice = updateProductDto.salePrice ?? product.salePrice;
+        const discount = updateProductDto.discountPercentage ?? product.discountPercentage;
+
+        product.finalPrice = Number(
+          (salePrice - salePrice * (discount / 100)).toFixed(2)
+        );
+      }
+
+      // update image
+      if (files?.image?.length) {
+        const newImage = await this.s3Service.uploadAsset({
+          file: files.image[0],
+          path: `Products/${product.productId}`,
+        });
+
+        await this.s3Service.deleteAsset({ Key: product.image });
+        product.image = newImage;
+      }
+
+      // update gallery
+      if (files?.gallery?.length) {
+        const newGallery = await this.s3Service.uploadAssets({
+          files: files.gallery,
+          path: `Products/${product.productId}/gallery`,
+        });
+
+        product.gallery = [
+          ...(product.gallery || []),
+          ...(newGallery || []),
+        ];
+      }
+
+      Object.assign(product, {
+        ...updateProductDto,
+        updatedBy: user._id,
+      });
+
+      await product.save();
+
+      return product.toJSON();
+    }
+    
+    async remove(productId: string): Promise<{ message: string }> {
+        const _id = generateToObjectId(productId);
+
+        const product = await this.productRepository.findOne({
+          filter: { _id },
+        });
+
+        if (!product) throw new NotFoundException("Product Not Found ❕");
+
+        product.deletedAt = new Date();
+        await product.save();
+
+        return { message: "Product deleted successfully ✅" };
+      }
+    async restore(productId: string): Promise<IProduct> {
+      const _id = generateToObjectId(productId);
+
+      const product = await this.productRepository.findOne({
+        filter: { _id, paranoid: false },
+      });
+
+      if (!product) throw new NotFoundException("Product Not Found ❕");
+
+      if (!product.deletedAt) {
+        throw new BadRequestException("Product already active ❕");
+      }
+
+      product.deletedAt = undefined;
+      await product.save();
+
+      return product.toJSON();
+    }
+
+
+
 }

@@ -44,21 +44,31 @@ export class CategoryController {
       @UploadedFile( new ParseFilePipe({fileIsRequired: false })) file? : IFile ) {
       return this.categoryService.update(params, updateCategoryDto , user , file );
     }  
-  @Get()
-  findAll() {
-    return this.categoryService.findAll();
-  }
+        @Get()
+        async findAll(): Promise<ICategory[]> {
+          return this.categoryService.findAll();
+        }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.categoryService.findOne(+id);
-  }
+        @Get(':categoryId')
+        async findOne(
+          @Param('categoryId') categoryId: string
+        ): Promise<ICategory> {
+          return this.categoryService.findOne(categoryId);
+        }
 
-  @Patch(':id')
+        @Auth([RoleEnum.ADMIN])
+        @Delete(':categoryId')
+        async remove(
+          @Param('categoryId') categoryId: string
+        ): Promise<{ message: string }> {
+          return this.categoryService.remove(categoryId);
+        }
 
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.categoryService.remove(+id);
-  }
+        @Auth([RoleEnum.ADMIN])
+        @Patch(':categoryId/restore')
+        async restore(
+          @Param('categoryId') categoryId: string
+        ): Promise<ICategory> {
+          return this.categoryService.restore(categoryId);
+        }
 }

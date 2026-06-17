@@ -24,14 +24,13 @@ export class BrandController {
     }
 
   @Get()
-
-  findAll() {
+  async findAll(): Promise<IBrand[]> {
     return this.brandService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.brandService.findOne(+id);
+  async findOne(@Param('id') id: string): Promise<IBrand> {
+    return this.brandService.findOne(id);
   }
 
   @UseInterceptors(FileInterceptor("attachment" , CloudMulter({validation :fileFieldValidation.image})))
@@ -43,8 +42,16 @@ export class BrandController {
     return this.brandService.update(params, updateBrandDto , user , file );
   }
 
-  @Delete(':brandId')
-  remove(@Param('id') id: string) {
-    return this.brandService.remove(+id);
-  }
+    @Delete(':brandId')
+    remove(@Param('brandId') brandId: string) {
+      return this.brandService.remove(brandId);
+    }
+
+    @Auth([RoleEnum.ADMIN])
+    @Patch(':brandId/restore')
+    async restore(
+      @Param('brandId') brandId: string
+    ): Promise<IBrand> {
+      return this.brandService.restore(brandId);
+    }
 }
