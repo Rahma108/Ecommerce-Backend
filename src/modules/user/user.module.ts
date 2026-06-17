@@ -1,18 +1,17 @@
-import { BadRequestException, MiddlewareConsumer, Module } from '@nestjs/common';
+import {MiddlewareConsumer, Module } from '@nestjs/common';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import {  PreAuthMiddleware } from 'src/common/middleware/authentication.middleware';
-import { MulterModule } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import type{ Request } from 'express';
-import { randomUUID } from 'node:crypto';
-import { S3Service } from 'src/common/utils';
+
+import { EncryptionSecurity, S3Service, SecurityService } from 'src/common/utils';
+import { UserModel } from 'src/DB/models';
 @Module({
   imports: [
+    UserModel
   ],
   exports: [],
   controllers: [UserController],
-  providers: [UserService , S3Service ],
+  providers: [UserService, S3Service, SecurityService, EncryptionSecurity]
 })
 export class UserModule {
     configure(consumer: MiddlewareConsumer) {

@@ -146,7 +146,7 @@ export class AuthenticationService {
   plaintext: password,
 });
 
-        const encryptedPhone = this.encryption.encrypt(phone);
+        const encryptedPhone = phone ? this.encryption.encrypt(phone) : undefined;
 
         const user = await this.userRepository.create({
         data: {

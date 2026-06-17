@@ -3,6 +3,7 @@ import {
   Allow,
   IsEmail,
   IsNotEmpty,
+  IsOptional,
   IsString,
   IsStrongPassword,
   Length,
@@ -23,6 +24,7 @@ export class ConfirmEmailDTO extends ResendConfirmEmailDto{
 }
 export class LoginDTO {
   @IsEmail()
+  @IsNotEmpty()
   email!: string;
 
   @IsStrongPassword()
@@ -34,13 +36,14 @@ export class LoginDTO {
 export class SignupDTO extends LoginDTO {
   @Length(2, 20, { message: 'Invalid range is 2 - 20' })
   username!: string;
-  @ValidateIf((object: SignupDTO) => {
-    return Boolean(object.password);
-  })
-  @IsMatch<string>(['password'], { message: 'Fail' })
+
+  @ValidateIf((o) => o.password !== undefined)
+  @IsMatch(['password'], { message: 'Fail' })
   confirmPassword!: string;
-  @Allow()
-  phone!:string;
+
+  @IsOptional()
+@IsString()
+  phone?: string;
 }
 
 

@@ -3,8 +3,8 @@ import { GenderEnum, LangEnum, RoleEnum } from '../enums';
 export interface IUser {
   lang: LangEnum ;
   username: string;
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   password: string;
   DOB?: Date;

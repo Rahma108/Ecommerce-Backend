@@ -14,13 +14,13 @@ async function bootstrap() {
   app.use("/upload" , express.static(resolve(`./uploads`)))
   // app.use(defaultLanguage)
   app.useGlobalInterceptors(new WatchInterceptor() , new LanguageInterceptor() , new TransformInterceptor() )
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: false,
-      forbidNonWhitelisted: false,
-    }),
-  );
-
+app.useGlobalPipes(
+  new ValidationPipe({
+    whitelist: false,
+    transform: true,
+    forbidNonWhitelisted: true,
+  }),
+);
   const port = config.get<number>('PORT') ?? 3000; 
 
   await app.listen(port);

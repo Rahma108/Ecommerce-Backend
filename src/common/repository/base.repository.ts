@@ -21,17 +21,40 @@ import {
 export abstract class BaseRepository<TRawDocument> {
   constructor(protected readonly model: Model<TRawDocument>) {}
     // Overloading ...............
-    create( {data } :{data: AnyKeys<TRawDocument>} )  //  Prototype CreateOne
-    :Promise<HydratedDocument<TRawDocument>>    
+            create(
+        { data }: { data: AnyKeys<TRawDocument> }
+        ): Promise<HydratedDocument<TRawDocument>>;
 
-    create( {data , options} :{data: AnyKeys<TRawDocument>[] , options?:CreateOptions} )  // Prototype Create
-    :Promise<HydratedDocument<TRawDocument> [] > 
+        create(
+        {
+            data,
+            options,
+        }: {
+            data: AnyKeys<TRawDocument>[];
+            options?: CreateOptions;
+        }
+        ): Promise<HydratedDocument<TRawDocument>[]>;
 
-    create( {data , options} :{data: AnyKeys<TRawDocument>[] | AnyKeys<TRawDocument> , options?:CreateOptions} )
-    :Promise<HydratedDocument<TRawDocument> [] | HydratedDocument<TRawDocument> > {
-    return this.model.create(data as any, options);
-  }
+      create({
+        data,
+        options,
+        }: {
+        data: AnyKeys<TRawDocument> | AnyKeys<TRawDocument>[];
+        options?: CreateOptions;
+        }) {
+        // case 1: array
+        if (Array.isArray(data)) {
+            if (options) {
+            return this.model.insertMany(data as any, options);
+            }
+            return this.model.insertMany(data as any);
+        }
 
+        // case 2: single document
+        return options
+            ? this.model.create(data as any, options)
+            : this.model.create(data as any);
+        }
   async createOne({
     data,
     options = {},
