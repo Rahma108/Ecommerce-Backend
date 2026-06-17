@@ -1,5 +1,9 @@
 export * from './user.interface';
+export * from './brand.interface';
+export * from './category.interface';
+export * from './product.interface';
+export * from './product.interface';
 export * from './pagination.interface';
 export * from './auth.interface';
 export * from './multer.interface';
-export * from './brand.interface';
+

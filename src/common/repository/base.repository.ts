@@ -212,7 +212,7 @@ async findOne({
 async findOneAndUpdate({ filter = {}, update, options } : {
     filter: QueryFilter<TRawDocument>,
     update: UpdateQuery<TRawDocument> | UpdateWithAggregationPipeline,
-    options?: MongooseUpdateQueryOptions<TRawDocument>
+    options?: QueryOptions<TRawDocument>
 }): Promise<HydratedDocument<TRawDocument> | null> {
 
     if (Array.isArray(update)) {
