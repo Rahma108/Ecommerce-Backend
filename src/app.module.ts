@@ -13,6 +13,7 @@ import { BrandModule } from './modules/brand/brand.module';
 import { OrderModule } from './modules/order/order.module';
 import { SharedAuthenticationModule } from './common/modules';
 import { S3Service } from './common/utils';
+import { CardModule } from './modules/card/card.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { S3Service } from './common/utils';
     CategoryModule,
     BrandModule,
     OrderModule,
+    CardModule
   ],
   controllers: [AppController],
   providers: [AppService , S3Service ],
