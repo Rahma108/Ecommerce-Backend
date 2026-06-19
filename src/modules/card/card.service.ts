@@ -3,16 +3,20 @@ import { CreateCardDto } from './dto/create-card.dto';
 import { RemoveItemsFromCardDto, UpdateCardDto } from './dto/update-card.dto';
 import { CartRepository } from 'src/common/repository/cart.repository';
 import { ProductRepository } from 'src/common/repository/product.repository';
-import { generateToObjectId } from 'src/common/utils';
+import { CacheService, cartCacheKey, generateToObjectId } from 'src/common/utils';
 import { HUserDocument } from 'src/DB/models';
 import { ICart } from 'src/common/interfaces';
 @Injectable()
 export class CardService {
   constructor(
     private readonly cartRepository : CartRepository ,
-    private readonly productRepository : ProductRepository 
+    private readonly productRepository : ProductRepository ,
+    private readonly redis : CacheService
   ){
 
+  }
+   private async clearCacheCart(user : HUserDocument){
+        await this.redis.deleteKeys(cartCacheKey(user));
   }
   async create({productId , quantity }: CreateCardDto ,  user : HUserDocument): Promise<ICart> {
     productId = generateToObjectId(productId as unknown as string )
@@ -34,6 +38,8 @@ export class CardService {
     if(!matched){
       cart.products.push({productId , quantity: quantity < 1 ? 1 : quantity  }) 
     }
+
+    await this.clearCacheCart(user)
     return await cart.save()
   }
 
@@ -46,12 +52,14 @@ export class CardService {
       }
     })
     if(!cart) throw new NotFoundException("Cart Not Exist ❕")
-  
+    await this.clearCacheCart(user)
     return cart.toJSON()
   }
 
   async remove(user : HUserDocument ) {
-    return await this.cartRepository.deleteOne({filter : { userId : user._id }})
+     const result = await this.cartRepository.deleteOne({filter : { userId : user._id }})
+     await this.clearCacheCart(user)
+     return result 
   }
 
   async findOne(user : HUserDocument ) :Promise<ICart>{
@@ -60,7 +68,6 @@ export class CardService {
     if(!cart){
       throw new NotFoundException("Cart is Empty ❕ ")
     } 
-
   return cart.toJSON()
   }
 

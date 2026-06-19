@@ -1,11 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UseInterceptors } from '@nestjs/common';
 import { CardService } from './card.service';
 import { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardDto , RemoveItemsFromCardDto} from './dto/update-card.dto';
-import{ User } from 'src/common/decorator';
+import{ PersonalCache, TTL, User } from 'src/common/decorator';
 import { AuthenticationGuard } from 'src/common/guard/authentication.guard';
 import type{ HUserDocument } from 'src/DB/models';
 import { ICart } from 'src/common/interfaces';
+import { CustomCartCacheInterceptor } from 'src/common/interceptor';
 
 @Controller('cart')
 export class CardController {
@@ -28,9 +29,13 @@ export class CardController {
     return await  this.cardService.remove(user);
   }
   
- @UseGuards(AuthenticationGuard)
+  // Cache always get..
+  @TTL(30)
+  @PersonalCache(true)
+  @UseInterceptors(CustomCartCacheInterceptor)
+  @UseGuards(AuthenticationGuard)
   @Get()
-  async findOne(@User() user : HUserDocument ) {
+  async findOne(@User() user : HUserDocument ): Promise<ICart> {
     return await  this.cardService.findOne(user);
   }
 

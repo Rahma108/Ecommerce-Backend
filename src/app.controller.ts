@@ -1,9 +1,11 @@
-import { Controller, Get, Req, Res } from '@nestjs/common';
+import { Controller, Get, Req, Res, UseInterceptors } from '@nestjs/common';
 import { AppService } from './app.service';
 import {pipeline} from 'node:stream'
 import { promisify } from 'node:util';
 import type { Request, Response } from 'express';
 import { S3Service } from './common/utils';
+import { CacheInterceptor ,  CacheTTL } from '@nestjs/cache-manager';
+import { CustomCacheInterceptor } from './common/interceptor';
 const s3WriteStream = promisify(pipeline)
 
 @Controller()
@@ -12,9 +14,12 @@ export class AppController {
     private readonly s3Service: S3Service
   ) {}
 
+  @CacheTTL(25000)
+  // @UseInterceptors(CacheInterceptor
+  @UseInterceptors(CustomCacheInterceptor)
   @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  getHello(): number{
+    return Date.now()
   }
 
   @Get("uploads/*path")
@@ -50,3 +55,5 @@ export class AppController {
   }
 
 }
+
+

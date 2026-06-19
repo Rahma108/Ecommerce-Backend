@@ -14,6 +14,7 @@ import { OrderModule } from './modules/order/order.module';
 import { SharedAuthenticationModule } from './common/modules';
 import { S3Service } from './common/utils';
 import { CardModule } from './modules/card/card.module';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
@@ -27,6 +28,10 @@ import { CardModule } from './modules/card/card.module';
       useFactory: (config: ConfigService) => ({
         uri: config.get<string>('DB_URI'),
       }),
+    }),
+    CacheModule.register({
+      ttl : 10000 , 
+      isGlobal: true 
     }),
     SharedAuthenticationModule,
     AuthModule,

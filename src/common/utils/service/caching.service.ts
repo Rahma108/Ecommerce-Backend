@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import type { RedisClientType } from 'redis';
 import { EmailEnum } from '../../enums';
 import { Types } from 'mongoose';
+import { HUserDocument } from 'src/DB/models';
 type BaseKeyType = {
   email: string;
   type?: EmailEnum;
@@ -18,6 +19,13 @@ type ExpireParams = {
   key: string;
   ttl: number;
 };
+
+export const cartCacheKey =(user : HUserDocument)=>{
+  return `Cart::${user._id.toString()}`
+
+}
+
+
 @Injectable()
 export class CacheService {
   constructor(
@@ -25,6 +33,10 @@ export class CacheService {
   ) {
     this.handleEvents();
   }
+  getCacheKey(value : string, userId?:string  ){
+  return userId ?  `Cart::${value}::${userId.toString()}` : `Cart::${value}`;
+
+}
   private handleEvents() {
     this.client.on('connect', () =>
       console.log(`REDIS_DB CONNECTED SUCCESSFULLY ✔️`),
