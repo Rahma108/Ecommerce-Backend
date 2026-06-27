@@ -23,7 +23,7 @@ async use(req: Request &{tokenType:TokenTypeEnum}, res: Response, next: NextFunc
         throw new Error('Authorization header missing');
     }
 
-    const [key, token] = authHeader.split(' ');
+    const [key, token] = authHeader.split(' ') || [] ;
 
     if (key !== 'Bearer' || !token) {
         throw new Error('Invalid Authorization format');

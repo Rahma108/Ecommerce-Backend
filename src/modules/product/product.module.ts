@@ -6,10 +6,11 @@ import { BrandRepository } from 'src/common/repository/brand.repository';
 import { CategoryRepository } from 'src/common/repository/category.repository';
 import { ProductRepository } from 'src/common/repository/product.repository';
 import { S3Service } from 'src/common/utils/service/s3.service';
+import { ProductResolver } from './product.resolver';
 
 @Module({
   imports:[ProductModel , CategoryModel , BrandModel ] ,
   controllers: [ProductController],
-  providers: [ProductService , CategoryRepository , BrandRepository , ProductRepository , S3Service]
+  providers: [ProductService , CategoryRepository , BrandRepository , ProductRepository , S3Service , ProductResolver]
 })
 export class ProductModule {}

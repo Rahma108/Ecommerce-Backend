@@ -6,3 +6,5 @@ export interface IAuthReq extends Request {
     credentials:{user: HUserDocument , decoded : JwtPayload}
 
 }
+
+export type CxtType = 'http' | 'ws' | 'rpc' | 'graphql';

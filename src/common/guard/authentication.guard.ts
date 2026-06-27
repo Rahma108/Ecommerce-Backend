@@ -1,9 +1,10 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { TokenService } from '../utils/service';
-import { IAuthReq } from '../interfaces';
+import { CxtType, IAuthReq } from '../interfaces';
 import { Reflector } from '@nestjs/core';
 import { TokenTypeEnum } from '../enums';
 import { tokenTypeName } from '../decorator';
+import { GqlExecutionContext } from '@nestjs/graphql';
 @Injectable()
 export class AuthenticationGuard implements CanActivate {
   constructor(
@@ -19,11 +20,16 @@ export class AuthenticationGuard implements CanActivate {
     [context.getHandler() , context.getClass()] )?? TokenTypeEnum.access
     let req!: IAuthReq;
     let authorization!:string;
-    switch (context.getType()) {
+    switch (context.getType<CxtType>()) {
       case "http":
         req = context.switchToHttp().getRequest()
         authorization = req.headers['authorization'] as string; 
         break;
+      case "graphql":
+        req = GqlExecutionContext.create(context).getContext().req
+        authorization = req.headers['authorization'] as string; 
+        break;
+
         // case "ws":
         // req = context.switchToWs().getClient()
         // authorization = req.headers['authorization'] as string; 

@@ -20,6 +20,13 @@ import {
 @Injectable()
 export abstract class BaseRepository<TRawDocument> {
   constructor(protected readonly model: Model<TRawDocument>) {}
+
+
+        async countDocuments(
+        filter?: QueryFilter<TRawDocument>,
+        ): Promise<number> {
+        return this.model.countDocuments(filter);
+        }
     // Overloading ...............
             create(
         { data }: { data: AnyKeys<TRawDocument> }

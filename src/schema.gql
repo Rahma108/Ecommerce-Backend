@@ -1,0 +1,57 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type SayHiResponse {
+  message: String!
+  age: Int!
+}
+
+type OneProductResponse {
+  _id: ID!
+  categoryId: ID!
+  brandId: ID!
+  updatedBy: ID
+  createdBy: ID!
+  notifyUsers: [ID!]
+  originalPrice: Float!
+  salePrice: Float!
+  discountPercentage: Float!
+  finalPrice: Float!
+  stock: Int!
+  rating: Int
+  name: String!
+  description: String!
+  slug: String!
+  image: String!
+  productId: String!
+  gallery: [String!]
+  createdAt: String!
+  updatedAt: String
+  deletedAt: String
+  restoredAt: String
+}
+
+type PaginateProductResponse {
+  docs: [OneProductResponse!]!
+  currentPage: Int
+  pages: Int
+  size: Int
+}
+
+type Query {
+  allProducts(page: Int, size: Int, search: String): PaginateProductResponse!
+
+  """First Api"""
+  Welcome(data: SayHiInputDto): [SayHiResponse!]!
+}
+
+input SayHiInputDto {
+  name: String!
+  age: Int
+}
+
+type Mutation {
+  """First Api"""
+  Welcome: SayHiResponse!
+}

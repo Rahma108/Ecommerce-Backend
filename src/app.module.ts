@@ -15,6 +15,9 @@ import { SharedAuthenticationModule } from './common/modules';
 import { S3Service } from './common/utils';
 import { CardModule } from './modules/card/card.module';
 import { CacheModule } from '@nestjs/cache-manager';
+import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { join } from 'node:path';
 
 @Module({
   imports: [
@@ -28,6 +31,11 @@ import { CacheModule } from '@nestjs/cache-manager';
       useFactory: (config: ConfigService) => ({
         uri: config.get<string>('DB_URI'),
       }),
+    }),
+    GraphQLModule.forRoot<ApolloDriverConfig>({
+      driver: ApolloDriver,
+      autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+      graphiql:true 
     }),
     CacheModule.register({
       ttl : 10000 , 

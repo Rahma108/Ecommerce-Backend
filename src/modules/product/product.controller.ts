@@ -32,6 +32,9 @@ export class ProductController {
         return this.productService.findAll();
       }
 
+
+
+
       
       @Get(':productId')
       async findOne(

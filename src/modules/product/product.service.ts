@@ -12,6 +12,8 @@ import type { HUserDocument } from 'src/DB/models/user.model';
 import { generateToObjectId } from 'src/common/utils/toObject';
 import { IProduct } from 'src/common/interfaces/product.interface';
 import { randomUUID } from 'node:crypto';
+import { PaginateGQLDto } from 'src/dto';
+import { IPagination } from 'src/common/interfaces';
 
 @Injectable()
 export class ProductService {
@@ -79,7 +81,7 @@ export class ProductService {
           return product.toJSON();
   }
    
-
+  // Restful
   async findAll(): Promise<IProduct[]> {
   const products = await this.productRepository.find({
     filter: {
@@ -89,6 +91,36 @@ export class ProductService {
 
   return products.map((p) => p.toJSON());
 }
+ // graphGl ..
+  async findAllProducts(
+  args: PaginateGQLDto,
+): Promise<IPagination<IProduct>> {
+  const page = args.page ?? 1;
+  const size = args.size ?? 10;
+
+  const filter = {
+    deletedAt: { $exists: false },
+  };
+
+  const [products, total] = await Promise.all([
+    this.productRepository.find({
+      filter,
+      options: {
+        skip: (page - 1) * size,
+        limit: size,
+      },
+    }),
+    this.productRepository.countDocuments(filter),
+  ]);
+
+  return {
+    docs: products,
+    currentPage: page,
+    pages: Math.ceil(total / size),
+    size,
+  };
+}
+
 
  async findOne(id: string): Promise<IProduct> {
   const _id = generateToObjectId(id);
