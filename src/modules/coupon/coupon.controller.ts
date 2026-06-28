@@ -7,7 +7,7 @@ import { CloudMulter, fileFieldValidation } from 'src/common/utils';
 import { Auth, User } from 'src/common/decorator';
 import { RoleEnum } from 'src/common/enums';
 import type{ HUserDocument } from 'src/DB/models';
-import type{ IFile } from 'src/common/interfaces';
+import type{ ICoupon, IFile } from 'src/common/interfaces';
 
 @Controller('coupon')
 export class CouponController {
@@ -19,7 +19,7 @@ export class CouponController {
   create(@Body() createCouponDto: CreateCouponDto,
   @User() user:HUserDocument,
   @UploadedFile(ParseFilePipe) file : IFile
-) {
+) :Promise<ICoupon>{
     return this.couponService.create(createCouponDto , user , file);
   }
 
