@@ -8,6 +8,8 @@ import type{ HUserDocument } from "src/DB/models"
 import { PaginateGQLDto } from "src/dto"
 import { IPagination, IProduct } from "src/common/interfaces"
 import { ProductService } from "./product.service"
+import { UseInterceptors } from "@nestjs/common"
+import { CustomCacheInterceptor } from "src/common/interceptor"
 
 
 
@@ -15,6 +17,7 @@ import { ProductService } from "./product.service"
 export class ProductResolver {
     constructor(private readonly productService : ProductService ){}
     // Find AlL Product  Graphql
+    @UseInterceptors(CustomCacheInterceptor)
     @Query(() => PaginateProductResponse)
     async allProducts(
     @Args() args: PaginateGQLDto,
