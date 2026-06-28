@@ -12,7 +12,7 @@ import type { HUserDocument } from 'src/DB/models/user.model';
 import { generateToObjectId } from 'src/common/utils/toObject';
 import { IProduct } from 'src/common/interfaces/product.interface';
 import { randomUUID } from 'node:crypto';
-import { PaginateGQLDto } from 'src/dto';
+import { PaginateDto, PaginateGQLDto } from 'src/dto';
 import { IPagination } from 'src/common/interfaces';
 
 @Injectable()
@@ -80,45 +80,34 @@ export class ProductService {
         }
           return product.toJSON();
   }
-   
-  // Restful
-  async findAll(): Promise<IProduct[]> {
-  const products = await this.productRepository.find({
+      async findAll(): Promise<IProduct[]> {
+            return await this.productRepository.find({
+        filter: {},
+      });
+          }
+
+
+   async findAllProducts({ page, size, search }: PaginateDto): Promise< IPagination<IProduct>> {
+  const result = await this.productRepository.paginate({
+    page,
+    size,
     filter: {
-      deletedAt: { $exists: false },
+      ...(search
+        ? {
+            $or: [
+              { name: { $regex: search, options: "i" } },
+              { slug: { $regex: search, options: "i" } },
+              { description: { $regex: search, options: "i" } },
+            ],
+          }
+        : {}),
     },
+    options:{
+      populate:[{path : "createdBy"}]
+    }
   });
 
-  return products.map((p) => p.toJSON());
-}
- // graphGl ..
-  async findAllProducts(
-  args: PaginateGQLDto,
-): Promise<IPagination<IProduct>> {
-  const page = args.page ?? 1;
-  const size = args.size ?? 10;
-
-  const filter = {
-    deletedAt: { $exists: false },
-  };
-
-  const [products, total] = await Promise.all([
-    this.productRepository.find({
-      filter,
-      options: {
-        skip: (page - 1) * size,
-        limit: size,
-      },
-    }),
-    this.productRepository.countDocuments(filter),
-  ]);
-
-  return {
-    docs: products,
-    currentPage: page,
-    pages: Math.ceil(total / size),
-    size,
-  };
+  return result;
 }
 
 

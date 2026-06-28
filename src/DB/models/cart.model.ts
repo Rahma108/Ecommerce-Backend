@@ -11,12 +11,11 @@ export type CartDocument = HydratedDocument<Cart>;
   toObject: { virtuals: true },
   strict: true,
   strictQuery: true,
-  collection:"CARTS"
 })
 export class Cart {
   @Prop({
     type: Types.ObjectId,
-    ref: 'USERS',
+    ref: 'User',
     required: true,
   })
   userId!: Types.ObjectId | IUser;

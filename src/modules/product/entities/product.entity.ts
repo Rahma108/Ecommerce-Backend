@@ -1,7 +1,8 @@
 import { Float, ID, ObjectType } from "@nestjs/graphql";
 import { Field, Int } from "@nestjs/graphql";
 import { Types } from "mongoose";
-import { IBrand, ICategory, IProduct, IUser } from "src/common/interfaces";
+import type{ IBrand, ICategory, IProduct, IUser } from "src/common/interfaces";
+import { OneUserResponse } from "src/modules/user/entities/user.entity";
 
 export class Product {}
 
@@ -27,8 +28,8 @@ export class SayHiResponse {
       
         @Field(()=> ID , {nullable : true })
         updatedBy?: Types.ObjectId | IUser | undefined;
-        @Field(()=> ID )
-        createdBy!: Types.ObjectId | IUser ;
+        @Field(()=> OneUserResponse )
+        createdBy!:  IUser ;
         @Field(()=> [ID] , {nullable : true } )
         notifyUsers?: Types.ObjectId[] | IUser[] ;
 
@@ -50,8 +51,8 @@ export class SayHiResponse {
           name!: string;
           @Field(()=> String )
           description!: string;
-          @Field(()=> String )
-          slug!: string;
+          @Field(()=> String , {nullable : true })
+          slug?: string;
           @Field(()=> String )
           image!: string;
           @Field(()=> String )

@@ -11,7 +11,6 @@ export type ProductDocument = HydratedDocument<Product>;
   toObject: { virtuals: true },
   strict: true,
   strictQuery: true,
-  collection:"PRODUCTS"
 })
 export class Product {
 
@@ -45,27 +44,27 @@ export class Product {
 
   @Prop({
     type: Types.ObjectId,
-    ref: 'USERS',
+    ref: 'User',
     required: true,
   })
   createdBy!: Types.ObjectId | IUser;
 
     @Prop({
     type: Types.ObjectId,
-    ref: 'USERS',
+     ref: 'User',
     required: false,
   })
   notifyUser? : Types.ObjectId[] | IUser[];
 
   @Prop({
     type: Types.ObjectId,
-    ref: 'BRANDS',
+    ref: 'Brand',
     required: true,
   })
   brandId! : Types.ObjectId | IBrand ;
   @Prop({
     type: Types.ObjectId,
-    ref: 'CATEGORIES',
+    ref: 'Category',
     required: true,
   })
   categoryId !:Types.ObjectId | ICategory ;
@@ -93,7 +92,7 @@ export class Product {
 
   @Prop({
     type: Types.ObjectId,
-    ref: 'USERS',
+    ref: 'User',
   })
   updatedBy!: Types.ObjectId | IUser;
 

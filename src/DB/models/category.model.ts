@@ -11,7 +11,6 @@ export type CategoryDocument = HydratedDocument<Category>;
   toObject: { virtuals: true },
   strict: true,
   strictQuery: true,
-  collection:"CATEGORIES"
 })
 export class Category {
 
@@ -32,21 +31,21 @@ export class Category {
 
   @Prop({
     type: Types.ObjectId,
-    ref: 'USERS',
+    ref: 'User',
     required: true,
   })
   createdBy!: Types.ObjectId | IUser;
 
     @Prop({
     type: Types.ObjectId,
-    ref: 'BRANDS',
+    ref: 'Brand',
     required: false,
   })
    brandIds? : Types.ObjectId[] | IBrand[];
 
   @Prop({
     type: Types.ObjectId,
-    ref: 'USERS',
+    ref: 'User',
   })
   updatedBy!: Types.ObjectId | IUser;
 

@@ -2,6 +2,47 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type OneUserResponse {
+  DOB: String
+  createdAt: String!
+  deletedAt: String
+  updatedAt: String
+  changeCredentialTime: String
+  confirmEmail: String
+  email: String!
+  firstName: String!
+  lastName: String!
+  username: String!
+  password: String
+  gender: GenderEnum!
+  provider: ProviderEnum!
+  role: RoleEnum!
+  lang: LangEnum!
+  profileImage: String
+  coverImages: [String!]
+  phone: String
+}
+
+enum GenderEnum {
+  MALE
+  FEMALE
+}
+
+enum ProviderEnum {
+  SYSTEM
+  GOOGLE
+}
+
+enum RoleEnum {
+  USER
+  ADMIN
+}
+
+enum LangEnum {
+  AR
+  En
+}
+
 type SayHiResponse {
   message: String!
   age: Int!
@@ -12,7 +53,7 @@ type OneProductResponse {
   categoryId: ID!
   brandId: ID!
   updatedBy: ID
-  createdBy: ID!
+  createdBy: OneUserResponse!
   notifyUsers: [ID!]
   originalPrice: Float!
   salePrice: Float!
@@ -22,7 +63,7 @@ type OneProductResponse {
   rating: Int
   name: String!
   description: String!
-  slug: String!
+  slug: String
   image: String!
   productId: String!
   gallery: [String!]

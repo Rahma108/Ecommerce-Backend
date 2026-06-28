@@ -11,7 +11,6 @@ export type BrandDocument = HydratedDocument<Brand>;
   toObject: { virtuals: true },
   strict: true,
   strictQuery: true,
-  collection:"BRANDS"
 })
 export class Brand {
 
@@ -32,14 +31,14 @@ export class Brand {
 
   @Prop({
     type: Types.ObjectId,
-    ref: 'USERS',
+    ref: 'User',
     required: true,
   })
   createdBy!: Types.ObjectId | IUser;
 
   @Prop({
     type: Types.ObjectId,
-    ref: 'USERS',
+    ref: 'User',
   })
   updatedBy!: Types.ObjectId | IUser;
 

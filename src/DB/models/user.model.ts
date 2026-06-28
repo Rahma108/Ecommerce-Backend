@@ -16,7 +16,6 @@ export type HUserDocument = HydratedDocument<IUser>;
   toObject: { virtuals: true },
   strict: true,
   strictQuery: true,
-  collection:"USERS"
 })
 export class User implements IUser {
   @Virtual({

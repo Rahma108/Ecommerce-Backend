@@ -20,7 +20,47 @@ import {
 @Injectable()
 export abstract class BaseRepository<TRawDocument> {
   constructor(protected readonly model: Model<TRawDocument>) {}
+     async paginate({
+        page = 1,
+        size = 10,
+        filter = {},
+        projection,
+        options,
+        }: {
+        page?: number;
+        size?: number;
+        filter?: QueryFilter<TRawDocument>;
+        projection?: ProjectionType<TRawDocument>;
+        options?: QueryOptions<TRawDocument>;
+        }) {
+        const skip = (page - 1) * size;
 
+        const query = this.model.find(filter, projection);
+
+        if (options?.populate) {
+            query.populate(options.populate as PopulateOptions[]);
+        }
+
+        if (options?.lean) {
+            query.lean();
+        }
+
+        if (options?.sort) {
+            query.sort(options.sort);
+        }
+
+        const docs = await query.skip(skip).limit(size).exec();
+
+        const totalDocs = await this.model.countDocuments(filter);
+
+        return {
+            docs,
+            currentPage: page,
+            pages: Math.ceil(totalDocs / size),
+            size,
+            totalDocs,
+        };
+        }
 
         async countDocuments(
         filter?: QueryFilter<TRawDocument>,
