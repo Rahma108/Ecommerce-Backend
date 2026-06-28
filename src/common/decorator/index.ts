@@ -5,3 +5,4 @@ export * from './auth.decorator';
 export * from './user.decorator';
 export * from './gte.decorator';
 export * from './ttl.decorator';
+export * from './coupon.decorator';

@@ -18,6 +18,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'node:path';
+import { CouponModule } from './modules/coupon/coupon.module';
 
 @Module({
   imports: [
@@ -49,7 +50,8 @@ import { join } from 'node:path';
     CategoryModule,
     BrandModule,
     OrderModule,
-    CardModule
+    CardModule,
+    CouponModule
   ],
   controllers: [AppController],
   providers: [AppService , S3Service ],
