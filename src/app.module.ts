@@ -51,7 +51,8 @@ import { CouponModule } from './modules/coupon/coupon.module';
     BrandModule,
     OrderModule,
     CardModule,
-    CouponModule
+    CouponModule,
+    OrderModule
   ],
   controllers: [AppController],
   providers: [AppService , S3Service ],

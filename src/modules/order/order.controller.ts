@@ -2,14 +2,26 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
+import { OrderRepository } from 'src/common/repository/order.repository';
+import { CartRepository, CouponRepository, ProductRepository } from 'src/common/repository';
+import { RoleEnum } from 'src/common/enums';
+import { Auth, User } from 'src/common/decorator';
+import type { HUserDocument } from 'src/DB/models';
 
 @Controller('order')
 export class OrderController {
-  constructor(private readonly orderService: OrderService) {}
+  constructor(private readonly orderService: OrderService,
+    private readonly orderRepository :OrderRepository ,
+    private readonly  productRepository: ProductRepository, 
+    private readonly cartRepository: CartRepository , 
+    private readonly  couponRepository :CouponRepository
+  ) {}
 
+  @Auth([RoleEnum.USER])
   @Post()
-  create(@Body() createOrderDto: CreateOrderDto) {
-    return this.orderService.create(createOrderDto);
+  create(@Body() createOrderDto: CreateOrderDto , 
+          @User() user: HUserDocument ) {
+    return this.orderService.create(createOrderDto , user );
   }
 
   @Get()
