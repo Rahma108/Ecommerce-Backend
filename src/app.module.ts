@@ -35,7 +35,8 @@ import { join } from 'node:path';
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
-      graphiql:true 
+      graphiql:true ,
+      introspection: true,
     }),
     CacheModule.register({
       ttl : 10000 , 
