@@ -1,14 +1,15 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { CreateOrderDto } from './dto/create-order.dto';
+import { CreateOrderDto, OrderParamsDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { HCouponDocument, HProductDocument, HUserDocument } from 'src/DB/models';
 import { OrderRepository } from 'src/common/repository/order.repository';
 import { CartRepository, CouponRepository, ProductRepository } from 'src/common/repository';
 import { IOrder, IOrderProduct } from 'src/common/interfaces';
-import { CouponTypeEnum } from 'src/common/enums';
+import { CouponTypeEnum, OrderStatusEnum } from 'src/common/enums';
 import { randomUUID } from 'node:crypto';
 import { CardService } from '../card/card.service';
 import { Types } from 'mongoose';
+import { generateToObjectId } from 'src/common/utils';
 
 @Injectable()
 export class OrderService {
@@ -129,6 +130,26 @@ export class OrderService {
     }
     await this.cardService.remove(user)
 
+
+    return order.toJSON();
+  }
+
+
+  async confirmOrder({orderId}: OrderParamsDto , user:HUserDocument ):Promise<IOrder> {
+
+    const order = await this.orderRepository.findOneAndUpdate({
+      filter:{
+        _id : generateToObjectId(orderId as unknown as string ) ,
+        status: OrderStatusEnum.PENDING
+      } ,
+      update :{
+        status: OrderStatusEnum.PLACED ,
+        updatedBy : user._id 
+      }
+    })
+    if(!order){
+      throw new NotFoundException("Fail to find this order ❕")
+    }
 
     return order.toJSON();
   }

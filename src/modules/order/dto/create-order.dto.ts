@@ -1,4 +1,5 @@
-import { IsEnum, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength } from "class-validator";
+import { IsEnum, IsMongoId, IsOptional, IsString, Matches,  MaxLength,  MinLength } from "class-validator";
+import { Types } from "mongoose";
 import { CurrencyTypeEnum, PaymentTypeEnum } from "src/common/enums";
 import { IOrder} from "src/common/interfaces";
 
@@ -34,4 +35,8 @@ export class CreateOrderDto  implements Partial<IOrder>{
 
     
 
+}
+export class OrderParamsDto{
+    @IsMongoId()
+    orderId!: Types.ObjectId ; 
 }

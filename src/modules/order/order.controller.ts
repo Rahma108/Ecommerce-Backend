@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { OrderService } from './order.service';
-import { CreateOrderDto } from './dto/create-order.dto';
+import { CreateOrderDto, OrderParamsDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { RoleEnum } from 'src/common/enums';
 import { Auth, User } from 'src/common/decorator';
@@ -17,6 +17,14 @@ export class OrderController {
   create(@Body() createOrderDto: CreateOrderDto , 
           @User() user: HUserDocument ) :Promise<IOrder>{
     return this.orderService.create(createOrderDto , user );
+  }
+
+
+  @Auth([RoleEnum.ADMIN])
+  @Patch("/:orderId/confirm")
+  confirmOrder(@Param() orderParamsDto: OrderParamsDto , 
+          @User() user: HUserDocument ) :Promise<IOrder>{
+    return this.orderService.confirmOrder( orderParamsDto , user );
   }
 
   @Get()
