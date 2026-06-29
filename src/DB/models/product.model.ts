@@ -3,7 +3,7 @@ import { HydratedDocument, Types } from 'mongoose';
 import { IBrand, ICategory, IProduct, IUser } from 'src/common/interfaces';
 import { generateSlug } from 'src/common/utils/slug';
 
-export type ProductDocument = HydratedDocument<Product>;
+export type HProductDocument = HydratedDocument<Product>;
 
 @Schema({
   timestamps: true,
@@ -83,12 +83,6 @@ export class Product {
   discountPercentage!: number
   @Prop({ type: Number , required: true , min : 0  })
   finalPrice !: number ;
-
-
-
-
-
-
 
   @Prop({
     type: Types.ObjectId,

@@ -8,7 +8,7 @@ export interface ICoupon {
   startDate: Date;
   endDate: Date;
   duration : number ;
-  usedBy :{ userId :Types.ObjectId , time : Date  }
+  usedBy :{ userId :Types.ObjectId  , orderId : Types.ObjectId , time : Date  }[]
   name: string;
   slug: string;
   image: string;

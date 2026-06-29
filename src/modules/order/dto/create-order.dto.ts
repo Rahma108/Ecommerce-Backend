@@ -1,28 +1,35 @@
-import { IsEnum, IsOptional, IsString, Matches, Max, Min } from "class-validator";
-import { CurrencyTypeEnum } from "src/common/enums";
+import { IsEnum, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength } from "class-validator";
+import { CurrencyTypeEnum, PaymentTypeEnum } from "src/common/enums";
 import { IOrder} from "src/common/interfaces";
 
 export class CreateOrderDto  implements Partial<IOrder>{
 
-    @Max(5000)
-    @Min(2)
+    @MaxLength(5000)
+    @MinLength(2)
     @IsString()
     address!: string ;
-    @Max(5000)
-    @Min(2)
+    @MaxLength(5000)
+    @MinLength(2)
     @IsString()
     @Matches(/^(00201|\+201|01)(0|1|2|5)\d{8}$/)
     phone!: string ;
-    @Max(5000)
-    @Min(2)
+    @MaxLength(5000)
+    @MinLength(2)
     @IsString()
     @IsOptional()
     note?: string ;
 
+   @MaxLength(5000)
+    @MinLength(2)
+    @IsString()
+    @IsOptional()
+    couponName?: string ;
+
     @IsEnum(CurrencyTypeEnum)
     currency!: CurrencyTypeEnum ;
     
-
+    @IsEnum(PaymentTypeEnum)
+    paymentType!: PaymentTypeEnum;
     
 
     

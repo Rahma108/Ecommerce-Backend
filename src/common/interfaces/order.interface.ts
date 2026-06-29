@@ -28,6 +28,8 @@ export interface IOrder {
   currency: CurrencyTypeEnum ;
   products :IOrderProduct[]
 
+  couponName?: string ;
+  
   cancel? : {userId : Types.ObjectId  | IUser , time : Date , note : String  }
   paidAt ?: Date ;
   refundedAt ?:Date ;

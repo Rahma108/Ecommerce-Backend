@@ -4,7 +4,7 @@ import { CouponTypeEnum } from 'src/common/enums';
 import { ICoupon, IUser } from 'src/common/interfaces';
 import { generateSlug } from 'src/common/utils/slug';
 
-export type CouponDocument = HydratedDocument<ICoupon>;
+export type HCouponDocument = HydratedDocument<ICoupon>;
 
 @Schema({
   timestamps: true,
@@ -28,12 +28,13 @@ export class Coupon implements ICoupon{
     type : [
     raw({
       userId : {type : Types.ObjectId , ref: "User" , required: true},
+      orderId : {type : Types.ObjectId , ref: "Order" , required: true},
       time :{type :Date , required: true}
     })
   ] ,
     required : false 
   })
-  usedBy!: { userId: Types.ObjectId; time: Date; };
+  usedBy!: { userId: Types.ObjectId; time: Date; orderId : Types.ObjectId  }[];
 
   
   
