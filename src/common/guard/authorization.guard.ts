@@ -1,5 +1,5 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { CxtType, IAuthReq } from '../interfaces';
+import { CxtType, IAuthReq, IAuthSocket } from '../interfaces';
 import { Reflector } from '@nestjs/core';
 import { RoleEnum} from '../enums';
 import { RoleName} from '../decorator';
@@ -27,6 +27,11 @@ async canActivate(context: ExecutionContext): Promise<boolean> {
       case "graphql":
          user= (GqlExecutionContext.create(context).getContext().req as IAuthReq ).credentials.user ;
          break;
+      case 'ws':
+      user = (context.switchToWs().getClient() as IAuthSocket)
+        .credentials.user;
+      break;
+
   }
   if (!roles) return true;
   if (!user || user.role === undefined) return false;

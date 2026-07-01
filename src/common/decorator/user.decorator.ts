@@ -1,7 +1,7 @@
 
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { HUserDocument } from 'src/DB/models';
-import { CxtType, IAuthReq } from '../interfaces';
+import { CxtType, IAuthReq, IAuthSocket } from '../interfaces';
 import { GqlExecutionContext } from '@nestjs/graphql';
 
 export const User = createParamDecorator(
@@ -15,13 +15,10 @@ export const User = createParamDecorator(
             case "graphql":
             user= (GqlExecutionContext.create(context).getContext().req as IAuthReq ).credentials.user ;
           break;
-
-
-
-            // case "ws":
-            // req = context.switchToWs().getClient()
-            // authorization = req.headers['authorization'] as string; 
-            // break;
+          case 'ws':
+          user = (context.switchToWs().getClient() as IAuthSocket)
+            .credentials.user;
+          break;
         
             default:
             break;

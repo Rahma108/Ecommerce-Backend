@@ -11,6 +11,7 @@ import { CardService } from '../card/card.service';
 import { Types } from 'mongoose';
 import { generateToObjectId, PaymentService } from 'src/common/utils';
 import { Request } from 'express';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 
 @Injectable()
 export class OrderService {
@@ -20,7 +21,8 @@ export class OrderService {
       private readonly cartRepository: CartRepository , 
       private readonly  couponRepository :CouponRepository,
       private readonly  cardService: CardService ,
-      private readonly paymentService : PaymentService
+      private readonly paymentService : PaymentService ,
+       private readonly realtimeGateway: RealtimeGateway
     ) {}
   async create({address , currency , phone , note , couponName ,paymentType}: CreateOrderDto , user:HUserDocument ):Promise<IOrder> {
     const cart = await this.cartRepository.findOne({
@@ -131,6 +133,8 @@ export class OrderService {
 
     }
     await this.cardService.remove(user)
+
+    await this.realtimeGateway.changeStock(stockProducts)
 
 
     return order.toJSON();
