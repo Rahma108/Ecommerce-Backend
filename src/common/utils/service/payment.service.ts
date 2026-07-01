@@ -1,0 +1,103 @@
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import type{ Request } from "express";
+
+import Stripe, { PaymentIntentCreateParams } from 'stripe';
+@Injectable()
+export class PaymentService {
+    private stripe!: Stripe;
+    constructor(
+        private readonly configService : ConfigService ,
+
+    ){
+        this.stripe = new Stripe(this.configService.get<string>("STRIPE_SECRET_KEY") as string );
+
+    }
+    async checkoutSession (
+        {
+            customer_email ,
+            metadata={}  ,
+            cancel_url = this.configService.get<string>("CANCEL_URL") as string ,
+            success_url= this.configService.get<string>("SUCCESS_URL") as string ,
+            discounts=[] ,
+            mode ="payment" ,
+            line_items ,
+
+        } : Stripe.Checkout.SessionCreateParams
+    ) : Promise<Stripe.Response<Stripe.Checkout.Session>>{
+        const session = await this.stripe.checkout.sessions.create({
+            customer_email ,
+            metadata ,
+            cancel_url ,
+            success_url ,
+            discounts ,
+            mode ,
+            line_items ,
+            
+
+        })
+        return session 
+    }
+
+      async createCoupon (
+        data : Stripe.CouponCreateParams
+        
+    ) : Promise<Stripe.Response<Stripe.Coupon>>{
+        return  await this.stripe.coupons.create(data)
+    }
+    async createPaymentMethod (token : string){
+        return await this.stripe.paymentMethods.create({
+            type:"card" ,
+            card:{
+                token 
+            }
+        })
+
+
+    }
+
+    async createPaymentIntent(data:PaymentIntentCreateParams){
+        return await this.stripe.paymentIntents.create(data)
+    }
+
+
+    async webhook(req: Request): Promise<Stripe.CheckoutSessionCompletedEvent> {
+
+    const event: Stripe.Event = this.stripe.webhooks.constructEvent(
+        req.body,
+        req.headers['stripe-signature'] as string,
+        this.configService.get<string>("STRIPE_WEBHOOK_SECRET") as string,
+    );
+
+    // Handle the event
+    if (event.type !== 'checkout.session.completed') {
+        throw new BadRequestException('Fail to pay');
+    }
+
+    console.log({
+        event,
+        metadata: event.data.object.metadata,
+    });
+
+    return event as Stripe.CheckoutSessionCompletedEvent;
+    }
+
+    async retrievePaymentIntent(intentId : string){
+        const intent = await this.stripe.paymentIntents.retrieve(intentId)
+        if(!intent){
+            throw new NotFoundException("Invalid Intent Id ❕")
+        }
+        return intent
+    }
+
+        async confirmPaymentIntent(intentId : string){
+        const intent = await this.retrievePaymentIntent(intentId)
+        if(intent.status != "requires_confirmation"){
+            throw new BadRequestException("Invalid Intent status")
+            }
+        return await this.stripe.paymentIntents.confirm(intentId)
+    }
+
+
+
+}

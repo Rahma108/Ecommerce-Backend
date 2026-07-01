@@ -12,6 +12,6 @@ export enum  PaymentTypeEnum {
     CARD
 }
 export enum CurrencyTypeEnum {
-    EGY = 'egy',
-    USD = 'us'
+    EGP = 'egp',
+    USD = 'usd',
 }

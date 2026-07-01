@@ -11,6 +11,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService); 
   app.enableCors();
+  app.use("/order/webhook" , express.raw({type : 'application/json'}))
   app.use("/upload" , express.static(resolve(`./uploads`)))
   // app.use(defaultLanguage)
   app.useGlobalInterceptors(new WatchInterceptor() , new LanguageInterceptor() , new TransformInterceptor() )

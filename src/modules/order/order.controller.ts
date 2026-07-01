@@ -1,11 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Req } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { CreateOrderDto, OrderParamsDto } from './dto/create-order.dto';
-import { UpdateOrderDto } from './dto/update-order.dto';
+import { CheckoutOrderDto, CheckoutOrderParamsDto, UpdateOrderDto } from './dto/update-order.dto';
 import { RoleEnum } from 'src/common/enums';
 import { Auth, User } from 'src/common/decorator';
 import type { HUserDocument } from 'src/DB/models';
 import { IOrder } from 'src/common/interfaces';
+import type{ Request } from 'express';
 
 @Controller('order')
 export class OrderController {
@@ -26,6 +27,22 @@ export class OrderController {
           @User() user: HUserDocument ) :Promise<IOrder>{
     return this.orderService.confirmOrder( orderParamsDto , user );
   }
+
+
+  @Auth([RoleEnum.USER])
+  @Post("/:orderId/checkout")
+  checkout(@Param() checkoutOrderParamsDto: CheckoutOrderParamsDto, 
+          @Body() body :  CheckoutOrderDto ,
+          @User() user: HUserDocument ) :Promise<any>{
+    return this.orderService.checkout( checkoutOrderParamsDto , body , user );
+  }
+
+  @Post("/webhook")
+  webhook(@Req() req : Request) :Promise<any>{
+    return this.orderService.webhook( req);
+  }
+
+
 
   @Get()
   findAll() {

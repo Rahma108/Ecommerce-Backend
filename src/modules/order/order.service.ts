@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateOrderDto, OrderParamsDto } from './dto/create-order.dto';
-import { UpdateOrderDto } from './dto/update-order.dto';
+import { CheckoutOrderParamsDto , CheckoutOrderDto, UpdateOrderDto } from './dto/update-order.dto';
 import { HCouponDocument, HProductDocument, HUserDocument } from 'src/DB/models';
 import { OrderRepository } from 'src/common/repository/order.repository';
 import { CartRepository, CouponRepository, ProductRepository } from 'src/common/repository';
@@ -9,7 +9,8 @@ import { CouponTypeEnum, OrderStatusEnum } from 'src/common/enums';
 import { randomUUID } from 'node:crypto';
 import { CardService } from '../card/card.service';
 import { Types } from 'mongoose';
-import { generateToObjectId } from 'src/common/utils';
+import { generateToObjectId, PaymentService } from 'src/common/utils';
+import { Request } from 'express';
 
 @Injectable()
 export class OrderService {
@@ -18,7 +19,8 @@ export class OrderService {
       private readonly  productRepository: ProductRepository, 
       private readonly cartRepository: CartRepository , 
       private readonly  couponRepository :CouponRepository,
-      private readonly  cardService: CardService
+      private readonly  cardService: CardService ,
+      private readonly paymentService : PaymentService
     ) {}
   async create({address , currency , phone , note , couponName ,paymentType}: CreateOrderDto , user:HUserDocument ):Promise<IOrder> {
     const cart = await this.cartRepository.findOne({
@@ -133,8 +135,6 @@ export class OrderService {
 
     return order.toJSON();
   }
-
-
   async confirmOrder({orderId}: OrderParamsDto , user:HUserDocument ):Promise<IOrder> {
 
     const order = await this.orderRepository.findOneAndUpdate({
@@ -151,7 +151,104 @@ export class OrderService {
       throw new NotFoundException("Fail to find this order ❕")
     }
 
-    return order.toJSON();
+    return order.toJSON()
+  }
+
+  async checkout({orderId}: CheckoutOrderParamsDto  , {token}: CheckoutOrderDto, user:HUserDocument ):Promise<any> {
+
+    const order = await this.orderRepository.findOne({
+      filter:{
+        _id : generateToObjectId(orderId as unknown as string ) ,
+        status: OrderStatusEnum.PLACED ,
+        paidAt : {$exists: false },
+        createdBy : user._id ,
+      }  ,
+      options:{
+        populate :[{path : "products.productId"}]
+      }
+    })
+    if(!order){
+      throw new NotFoundException("Fail to find this order ❕")
+    }
+
+    let discounts: any[] = [] 
+    if(order.discountPercent > 0 ){
+      const coupon = await this.paymentService.createCoupon({
+        percent_off : order.discountPercent,
+        duration : "once" ,
+        currency : order.currency 
+      });
+      console.log({coupon})
+      discounts.push({
+        coupon: coupon.id 
+      })
+
+
+    }
+    const session = await this.paymentService.checkoutSession({
+      customer_email : user.email ,
+      metadata : {orderId : order._id.toString()} ,
+        mode: "payment" ,
+        line_items :order.products.map(product => {
+          return {
+            quantity:product.quantity    ,
+            price_data :{
+            currency: order.currency ,
+            product_data:{
+              name : (product.productId as unknown as HProductDocument).name 
+            } ,
+              unit_amount : product.unitAmount * 100 
+
+            },
+          }
+
+        }) ,
+        discounts ,
+      
+    
+    })
+
+
+    const method = await this.paymentService.createPaymentMethod(token)
+    const intent = await this.paymentService.createPaymentIntent({
+      amount : order.subtotal * 100 ,
+      currency : order.currency ,
+      automatic_payment_methods :{
+        enabled : true ,
+        allow_redirects : 'never'
+      } ,
+      payment_method: method.id 
+    })
+
+    console.log({intent , method })
+    order.intentId = intent.id 
+    await order.save()
+    return session
+  }
+
+  async webhook(req: Request): Promise<void> {
+
+      const event = await this.paymentService.webhook(req)
+      const {orderId} = event.data.object.metadata as {orderId: string} 
+        const order = await this.orderRepository.findOneAndUpdate({
+        filter:{
+          _id : generateToObjectId(orderId as unknown as string ) ,
+          status: OrderStatusEnum.PLACED ,
+          paidAt : {$exists: false }
+        }  ,
+        update:{
+          paidAt : new Date(Date.now())
+
+        }
+      })
+      console.log({order});
+      if(!order){
+        throw new NotFoundException("Fail to find this order ❕")
+      }
+      const result = await this.paymentService.confirmPaymentIntent(order.intentId as string) 
+      console.log({result})
+      return ;
+  
   }
 
   findAll() {

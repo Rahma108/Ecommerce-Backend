@@ -62,7 +62,7 @@ export class Order implements IOrder{
 
   @Prop({ type: Number, enum : PaymentTypeEnum , default: PaymentTypeEnum.CASH  })
   paymentType!: PaymentTypeEnum;
-  @Prop({ type: String , enum : CurrencyTypeEnum , default: CurrencyTypeEnum.EGY  })
+  @Prop({ type: String , enum : CurrencyTypeEnum , default: CurrencyTypeEnum.EGP })
   currency!: CurrencyTypeEnum ;
   @Prop({ type: Number, enum : OrderStatusEnum , default: OrderStatusEnum.PENDING  })
   status!: OrderStatusEnum;
