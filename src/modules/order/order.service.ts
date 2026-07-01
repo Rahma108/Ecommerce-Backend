@@ -5,7 +5,7 @@ import { HCouponDocument, HProductDocument, HUserDocument } from 'src/DB/models'
 import { OrderRepository } from 'src/common/repository/order.repository';
 import { CartRepository, CouponRepository, ProductRepository } from 'src/common/repository';
 import { IOrder, IOrderProduct } from 'src/common/interfaces';
-import { CouponTypeEnum, OrderStatusEnum } from 'src/common/enums';
+import { CouponTypeEnum, OrderStatusEnum, PaymentTypeEnum } from 'src/common/enums';
 import { randomUUID } from 'node:crypto';
 import { CardService } from '../card/card.service';
 import { Types } from 'mongoose';
@@ -162,6 +162,7 @@ export class OrderService {
         status: OrderStatusEnum.PLACED ,
         paidAt : {$exists: false },
         createdBy : user._id ,
+        paymentType : PaymentTypeEnum.CARD 
       }  ,
       options:{
         populate :[{path : "products.productId"}]
@@ -234,6 +235,7 @@ export class OrderService {
         filter:{
           _id : generateToObjectId(orderId as unknown as string ) ,
           status: OrderStatusEnum.PLACED ,
+          paymentType : PaymentTypeEnum.CARD ,
           paidAt : {$exists: false }
         }  ,
         update:{
@@ -249,6 +251,38 @@ export class OrderService {
       console.log({result})
       return ;
   
+  }
+
+
+    async cancel({orderId}: OrderParamsDto , user:HUserDocument ):Promise<IOrder> {
+
+    const order = await this.orderRepository.findOneAndUpdate({
+      filter:{
+        _id : generateToObjectId(orderId as unknown as string ) ,
+        status: {$lt: OrderStatusEnum.CANCELED }
+      } ,
+      update :{
+        status: OrderStatusEnum.CANCELED,
+        updatedBy : user._id 
+      }
+    })
+    if(!order){
+      throw new NotFoundException("Fail to find this order ❕")
+    }
+
+    if(order.paymentType == PaymentTypeEnum.CARD && order.intentId && order.paidAt && !order.refundedAt){
+      await this.paymentService.refund(order.intentId );
+      order.status = OrderStatusEnum.REFUNDED;
+      order.refundedAt = new Date(Date.now())
+      await order.save();
+
+    }
+
+    //Reverse 
+    //update stock for each product 
+    // re generate cart
+    //remove user from coupon 
+    return order.toJSON()
   }
 
   findAll() {

@@ -43,6 +43,14 @@ export class OrderController {
   }
 
 
+  @Auth([RoleEnum.ADMIN])
+  @Patch("/:orderId/cancel")
+  cancel(@Param() orderParamsDto: OrderParamsDto , 
+          @User() user: HUserDocument ) :Promise<IOrder>{
+    return this.orderService.cancel( orderParamsDto , user );
+  }
+   
+
 
   @Get()
   findAll() {

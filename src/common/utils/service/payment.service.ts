@@ -98,6 +98,14 @@ export class PaymentService {
         return await this.stripe.paymentIntents.confirm(intentId)
     }
 
+    async refund(intentId : string){
+        const intent = await this.retrievePaymentIntent(intentId)
+        if(intent.status != "succeeded"){
+            throw new BadRequestException("Invalid Intent status")
+            }
+        return await this.stripe.refunds.create({payment_intent : intentId})
+    }
+
 
 
 }
