@@ -19,6 +19,7 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'node:path';
 import { CouponModule } from './modules/coupon/coupon.module';
+import { RealtimeModule } from './modules/realtime/realtime.module';
 
 @Module({
   imports: [
@@ -52,7 +53,8 @@ import { CouponModule } from './modules/coupon/coupon.module';
     OrderModule,
     CardModule,
     CouponModule,
-    OrderModule
+    OrderModule ,
+    RealtimeModule
   ],
   controllers: [AppController],
   providers: [AppService , S3Service ],
